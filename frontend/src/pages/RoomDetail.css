@@ -1,0 +1,81 @@
+.room-detail-page { padding: 32px 0 80px; }
+.breadcrumb { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+.breadcrumb a { color: var(--text-muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--accent); }
+.breadcrumb span { color: var(--text-secondary); }
+
+.room-detail-layout { display: grid; grid-template-columns: 1fr 360px; gap: 32px; align-items: start; }
+.room-detail-main { display: flex; flex-direction: column; gap: 0; }
+
+/* Gallery */
+.gallery { border-radius: var(--radius-lg); overflow: hidden; }
+.gallery-main { position: relative; aspect-ratio: 16/9; background: var(--bg-card); }
+.gallery-main img { width: 100%; height: 100%; object-fit: cover; }
+.gallery-badge {
+  position: absolute; bottom: 12px; right: 12px;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+  padding: 5px 12px; border-radius: 100px;
+  font-size: 12px; color: #fff;
+}
+.gallery-thumbs { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; padding-bottom: 4px; }
+.gallery-thumb { width: 80px; height: 60px; border-radius: 8px; overflow: hidden; border: 2px solid transparent; cursor: pointer; flex-shrink: 0; transition: var(--transition); }
+.gallery-thumb.active { border-color: var(--accent); }
+.gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.room-info-section { padding: 28px 0; }
+.room-info-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.room-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+.room-price-box { text-align: right; flex-shrink: 0; }
+.room-price { font-family: var(--font-heading); font-size: 32px; font-weight: 800; }
+
+.amenities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.amenity-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.rules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.rule-item { display: flex; flex-direction: column; gap: 4px; padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+.rule-item span:first-child { color: var(--text-muted); font-size: 12px; }
+.rule-item span:last-child { color: var(--text-primary); font-weight: 500; }
+
+.owner-info-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px; margin-top: 24px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.owner-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 16px; overflow: hidden; flex-shrink: 0;
+}
+.owner-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.review-form { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+.reviews-list { display: flex; flex-direction: column; gap: 16px; }
+.review-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.review-header { display: flex; align-items: center; gap: 10px; }
+.review-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; overflow: hidden; flex-shrink: 0; }
+.review-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Booking sidebar */
+.booking-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 24px; position: sticky; top: 80px;
+}
+.booking-card h3 { font-size: 18px; margin-bottom: 4px; }
+.booking-total { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-secondary); border-radius: 8px; font-size: 14px; }
+.booking-total strong { font-family: var(--font-heading); font-size: 18px; }
+
+@media (max-width: 900px) {
+  .room-detail-layout { grid-template-columns: 1fr; }
+  .booking-sidebar { order: -1; }
+  .booking-card { position: static; }
+}
