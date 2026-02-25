@@ -2,17 +2,20 @@ const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
+  port: Number(process.env.SMTP_PORT), // important
   secure: false,
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: process.env.SMTP_USER,  // should be "apikey"
+    pass: process.env.SMTP_PASS,  // your SendGrid API key
+  },
+  tls: {
+    rejectUnauthorized: false,
   },
 });
 
 const sendEmail = async ({ to, subject, html }) => {
   const mailOptions = {
-    from: `"Brainware Rooms" <${process.env.SMTP_USER}>`,
+    from: `"Brainware Rooms" <${process.env.SMTP_FROM}>`,
     to,
     subject,
     html,
