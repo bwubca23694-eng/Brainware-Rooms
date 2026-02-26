@@ -1,57 +1,40 @@
-// ✅ Gmail API via OAuth2 — works on Render (no SMTP port needed)
+// ✅ Brevo (Sendinblue) SMTP — works on Render, free 300 emails/day
 const nodemailer = require('nodemailer');
-const { google } = require('googleapis');
 
-const OAuth2 = google.auth.OAuth2;
+const transporter = nodemailer.createTransport({
+  host: 'smtp-relay.brevo.com',
+  port: 587,
+  secure: false, // STARTTLS
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
-/**
- * Creates a fresh Nodemailer transporter using Gmail OAuth2.
- * Fetches a new access token from the refresh token on every call,
- * so it never expires and works reliably on Render / serverless hosting.
- */
-const createTransporter = async () => {
-  const oauth2Client = new OAuth2(
-    process.env.GMAIL_CLIENT_ID,
-    process.env.GMAIL_CLIENT_SECRET,
-    'https://developers.google.com/oauthplayground'
-  );
-
-  oauth2Client.setCredentials({
-    refresh_token: process.env.GMAIL_REFRESH_TOKEN,
-  });
-
-  const accessToken = await new Promise((resolve, reject) => {
-    oauth2Client.getAccessToken((err, token) => {
-      if (err) {
-        console.error('❌ Gmail OAuth2 - failed to get access token:', err);
-        reject(err);
-      } else {
-        resolve(token);
-      }
-    });
-  });
-
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      type: 'OAuth2',
-      user: process.env.GMAIL_USER,
-      clientId: process.env.GMAIL_CLIENT_ID,
-      clientSecret: process.env.GMAIL_CLIENT_SECRET,
-      refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-      accessToken,
-    },
-  });
-};
+// Verify connection on startup — check Render logs for this message
+transporter.verify((err, success) => {
+  if (err) {
+    console.error('❌ Brevo SMTP connection failed:', err.message);
+    console.error('   Check SMTP_USER and SMTP_PASS in your environment variables');
+  } else {
+    console.log('✅ Brevo SMTP ready — emails will send correctly');
+  }
+});
 
 const sendEmail = async ({ to, subject, html }) => {
-  const transporter = await createTransporter();
-  return transporter.sendMail({
-    from: `"Brainware Rooms" <${process.env.GMAIL_USER}>`,
-    to,
-    subject,
-    html,
-  });
+  try {
+    const info = await transporter.sendMail({
+      from: `"Brainware Rooms" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      html,
+    });
+    console.log(`✅ Email sent to ${to} — MessageId: ${info.messageId}`);
+    return info;
+  } catch (err) {
+    console.error(`❌ Failed to send email to ${to}:`, err.message);
+    throw err; // re-throw so caller can handle
+  }
 };
 
 exports.sendVerificationEmail = async (user, token) => {
@@ -68,8 +51,12 @@ exports.sendVerificationEmail = async (user, token) => {
         <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
           <h2 style="color: #1a1a2e;">Hi ${user.name},</h2>
           <p>Please verify your email address to get started:</p>
-          <a href="${url}" style="display:inline-block; background:#e94560; color:white; padding:12px 30px; border-radius:6px; text-decoration:none; font-weight:bold;">Verify Email</a>
-          <p style="margin-top:20px; color:#666; font-size:12px;">Link expires in 24 hours. If you didn't register, ignore this email.</p>
+          <a href="${url}" style="display:inline-block; background:#e94560; color:white; padding:12px 30px; border-radius:6px; text-decoration:none; font-weight:bold;">
+            Verify Email
+          </a>
+          <p style="margin-top:20px; color:#666; font-size:12px;">
+            Link expires in 24 hours. If you didn't register, ignore this email.
+          </p>
         </div>
       </div>
     `,
@@ -89,8 +76,12 @@ exports.sendPasswordResetEmail = async (user, token) => {
         <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
           <h2 style="color: #1a1a2e;">Password Reset</h2>
           <p>Hi ${user.name}, click below to reset your password:</p>
-          <a href="${url}" style="display:inline-block; background:#e94560; color:white; padding:12px 30px; border-radius:6px; text-decoration:none; font-weight:bold;">Reset Password</a>
-          <p style="margin-top:20px; color:#666; font-size:12px;">Link expires in 1 hour. If you didn't request this, ignore this email.</p>
+          <a href="${url}" style="display:inline-block; background:#e94560; color:white; padding:12px 30px; border-radius:6px; text-decoration:none; font-weight:bold;">
+            Reset Password
+          </a>
+          <p style="margin-top:20px; color:#666; font-size:12px;">
+            Link expires in 1 hour. If you didn't request this, ignore this email.
+          </p>
         </div>
       </div>
     `,
@@ -99,14 +90,33 @@ exports.sendPasswordResetEmail = async (user, token) => {
 
 exports.sendBookingNotification = async (email, name, type, details) => {
   const messages = {
-    new_booking: { subject: 'New Booking Request', body: `You have a new booking request from ${details.studentName} for ${details.roomTitle}.` },
-    booking_confirmed: { subject: 'Booking Confirmed!', body: `Your booking for ${details.roomTitle} has been confirmed by the owner.` },
-    booking_rejected: { subject: 'Booking Update', body: `Your booking request for ${details.roomTitle} was not accepted. ${details.note || ''}` },
+    new_booking: {
+      subject: 'New Booking Request',
+      body: `You have a new booking request from <strong>${details.studentName}</strong> for <strong>${details.roomTitle}</strong>.`,
+    },
+    booking_confirmed: {
+      subject: '🎉 Booking Confirmed!',
+      body: `Your booking for <strong>${details.roomTitle}</strong> has been confirmed by the owner.`,
+    },
+    booking_rejected: {
+      subject: 'Booking Update',
+      body: `Your booking request for <strong>${details.roomTitle}</strong> was not accepted. ${details.note ? `<br>Owner note: ${details.note}` : ''}`,
+    },
   };
   const msg = messages[type];
+  if (!msg) return;
   return sendEmail({
     to: email,
     subject: msg.subject,
-    html: `<div style="font-family:Arial,sans-serif;padding:20px;"><h2>Hi ${name},</h2><p>${msg.body}</p><p>Login to <a href="${process.env.FRONTEND_URL}">Brainware Rooms</a> for details.</p></div>`,
+    html: `
+      <div style="font-family:Arial,sans-serif; max-width:500px; margin:0 auto; padding:20px;">
+        <h2 style="color:#e94560;">Brainware Rooms</h2>
+        <p>Hi <strong>${name}</strong>,</p>
+        <p>${msg.body}</p>
+        <a href="${process.env.FRONTEND_URL}" style="display:inline-block;margin-top:16px;background:#e94560;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">
+          Open Dashboard
+        </a>
+      </div>
+    `,
   });
 };
