@@ -24,7 +24,7 @@ transporter.verify((err, success) => {
 const sendEmail = async ({ to, subject, html }) => {
   try {
     const info = await transporter.sendMail({
-      from: `"Brainware Rooms" <${process.env.SMTP_USER}>`,
+      from: `"Brainware Rooms" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
       to,
       subject,
       html,
