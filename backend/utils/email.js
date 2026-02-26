@@ -1,57 +1,23 @@
-// ✅ Gmail API via OAuth2 — works on Render (no SMTP port needed)
 const nodemailer = require('nodemailer');
-const { google } = require('googleapis');
 
-const OAuth2 = google.auth.OAuth2;
-
-/**
- * Creates a fresh Nodemailer transporter using Gmail OAuth2.
- * Fetches a new access token from the refresh token on every call,
- * so it never expires and works reliably on Render / serverless hosting.
- */
-const createTransporter = async () => {
-  const oauth2Client = new OAuth2(
-    process.env.GMAIL_CLIENT_ID,
-    process.env.GMAIL_CLIENT_SECRET,
-    'https://developers.google.com/oauthplayground'
-  );
-
-  oauth2Client.setCredentials({
-    refresh_token: process.env.GMAIL_REFRESH_TOKEN,
-  });
-
-  const accessToken = await new Promise((resolve, reject) => {
-    oauth2Client.getAccessToken((err, token) => {
-      if (err) {
-        console.error('❌ Gmail OAuth2 - failed to get access token:', err);
-        reject(err);
-      } else {
-        resolve(token);
-      }
-    });
-  });
-
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      type: 'OAuth2',
-      user: process.env.GMAIL_USER,
-      clientId: process.env.GMAIL_CLIENT_ID,
-      clientSecret: process.env.GMAIL_CLIENT_SECRET,
-      refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-      accessToken,
-    },
-  });
-};
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
 const sendEmail = async ({ to, subject, html }) => {
-  const transporter = await createTransporter();
-  return transporter.sendMail({
-    from: `"Brainware Rooms" <${process.env.GMAIL_USER}>`,
+  const mailOptions = {
+    from: `"Brainware Rooms" <${process.env.SMTP_USER}>`,
     to,
     subject,
     html,
-  });
+  };
+  return transporter.sendMail(mailOptions);
 };
 
 exports.sendVerificationEmail = async (user, token) => {
