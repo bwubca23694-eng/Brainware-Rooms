@@ -1,40 +1,56 @@
-// ✅ Brevo (Sendinblue) SMTP — works on Render, free 300 emails/day
-const nodemailer = require('nodemailer');
+// ✅ Brevo HTTP API — works on Render (uses port 443, never blocked)
+const https = require('https');
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
-  port: 587,
-  secure: false, // STARTTLS
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
-// Verify connection on startup — check Render logs for this message
-transporter.verify((err, success) => {
-  if (err) {
-    console.error('❌ Brevo SMTP connection failed:', err.message);
-    console.error('   Check SMTP_USER and SMTP_PASS in your environment variables');
-  } else {
-    console.log('✅ Brevo SMTP ready — emails will send correctly');
-  }
-});
-
-const sendEmail = async ({ to, subject, html }) => {
-  try {
-    const info = await transporter.sendMail({
-      from: `"Brainware Rooms" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
-      to,
+/**
+ * Send email via Brevo Transactional Email HTTP API.
+ * No SMTP, no port issues — pure HTTPS POST to api.brevo.com
+ */
+const sendEmail = ({ to, subject, html }) => {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({
+      sender: {
+        name: 'Brainware Rooms',
+        email: process.env.SMTP_FROM,
+      },
+      to: [{ email: to }],
       subject,
-      html,
+      htmlContent: html,
     });
-    console.log(`✅ Email sent to ${to} — MessageId: ${info.messageId}`);
-    return info;
-  } catch (err) {
-    console.error(`❌ Failed to send email to ${to}:`, err.message);
-    throw err; // re-throw so caller can handle
-  }
+
+    const options = {
+      hostname: 'api.brevo.com',
+      path: '/v3/smtp/email',
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'content-type': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-length': Buffer.byteLength(body),
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          console.log(`✅ Email sent to ${to}`);
+          resolve(JSON.parse(data));
+        } else {
+          console.error(`❌ Brevo API error ${res.statusCode}:`, data);
+          reject(new Error(`Brevo API error: ${res.statusCode} — ${data}`));
+        }
+      });
+    });
+
+    req.on('error', (err) => {
+      console.error(`❌ Failed to send email to ${to}:`, err.message);
+      reject(err);
+    });
+
+    req.write(body);
+    req.end();
+  });
 };
 
 exports.sendVerificationEmail = async (user, token) => {
