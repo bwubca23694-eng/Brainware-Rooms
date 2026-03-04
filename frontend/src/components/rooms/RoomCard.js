@@ -18,6 +18,8 @@ const typeColors = {
 
 export default function RoomCard({ room }) {
   const img = room.images?.[0]?.url;
+  const isNew = room.createdAt && (Date.now() - new Date(room.createdAt)) < 7 * 24 * 60 * 60 * 1000;
+  const hasVirtualTour = room.images?.length >= 5;
   const topAmenities = room.amenities?.slice(0, 4) || [];
   const extra = (room.amenities?.length || 0) - 4;
   const typeColor = typeColors[room.type] || '#ff6b2b';
@@ -38,6 +40,8 @@ export default function RoomCard({ room }) {
           <span className="badge" style={{ background: `${typeColor}18`, color: typeColor, border: `1px solid ${typeColor}35` }}>
             {room.type}
           </span>
+          {isNew && <span className="badge" style={{background:'rgba(16,185,129,0.9)',color:'#fff',border:'none'}}>🆕 New</span>}
+          {hasVirtualTour && <span className="badge" style={{background:'rgba(139,92,246,0.85)',color:'#fff',border:'none'}}>🖼️ Tour</span>}
         </div>
 
         {/* Distance */}

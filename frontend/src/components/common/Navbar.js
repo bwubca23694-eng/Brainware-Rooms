@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import ThemeToggle from './ThemeToggle';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -35,6 +36,8 @@ export default function Navbar() {
         </div>
 
         <div className="navbar-right">
+          <ThemeToggle />
+
           {user ? (
             <div className="user-menu" onClick={() => setDropOpen(!dropOpen)}>
               <div className="user-avatar">
@@ -71,6 +74,7 @@ export default function Navbar() {
               <Link to="/register" className="btn btn-primary btn-sm">Join Free</Link>
             </div>
           )}
+
           <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
             <span/><span/><span/>
           </button>

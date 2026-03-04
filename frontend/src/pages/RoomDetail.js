@@ -59,6 +59,26 @@ export default function RoomDetail() {
     }
   };
 
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const text = `Check out this room near BWU: ${room.title} — ₹${room.rent?.toLocaleString()}/month\n${url}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: room.title, text, url });
+      } catch (e) {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success('🔗 Link copied to clipboard!');
+      } catch (e) {
+        toast.error('Could not copy link');
+      }
+    }
+  };
+
+  const isNew = room.createdAt && (Date.now() - new Date(room.createdAt)) < 7 * 24 * 60 * 60 * 1000;
+  const hasVirtualTour = room.images?.length >= 5;
   if (loading) return <div className="loading-center" style={{ minHeight: '60vh' }}><div className="spinner"></div></div>;
   if (!room) return <div className="container" style={{ padding: '60px 0', textAlign: 'center' }}><h2>Room not found</h2><Link to="/rooms" className="btn btn-primary" style={{ marginTop: '16px' }}>Browse Rooms</Link></div>;
 
@@ -99,20 +119,27 @@ export default function RoomDetail() {
                 <div>
                   <div className="room-badges">
                     <span className={`badge ${room.availability ? 'badge-green' : 'badge-red'}`}>
-                      {room.availability ? 'Available' : 'Occupied'}
+                      {room.availability ? '✓ Available' : 'Occupied'}
                     </span>
                     <span className="badge badge-blue">{room.type}</span>
                     {room.rating > 0 && <span className="badge badge-yellow">⭐ {room.rating.toFixed(1)}</span>}
+                    {isNew && <span className="badge" style={{background:'rgba(16,185,129,0.12)',color:'#10b981',border:'1px solid rgba(16,185,129,0.25)'}}>🆕 New</span>}
+                    {hasVirtualTour && <span className="badge" style={{background:'rgba(139,92,246,0.12)',color:'#a78bfa',border:'1px solid rgba(139,92,246,0.25)'}}>🖼️ 5+ Photos</span>}
                   </div>
                   <h1 style={{ fontSize: '28px', margin: '10px 0 6px' }}>{room.title}</h1>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
                     📍 {room.address?.street}, {room.address?.area}, {room.address?.city} - {room.address?.pincode}
                   </p>
                 </div>
-                <div className="room-price-box">
-                  <span className="room-price">₹{room.rent?.toLocaleString()}</span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>/month</span>
-                  {room.deposit > 0 && <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>₹{room.deposit?.toLocaleString()} deposit</div>}
+                <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:'10px'}}>
+                  <button onClick={handleShare} className="btn btn-ghost btn-sm" title="Share this room" style={{gap:'6px'}}>
+                    📤 Share
+                  </button>
+                  <div className="room-price-box">
+                    <span className="room-price">₹{room.rent?.toLocaleString()}</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>/month</span>
+                    {room.deposit > 0 && <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>₹{room.deposit?.toLocaleString()} deposit</div>}
+                  </div>
                 </div>
               </div>
 
