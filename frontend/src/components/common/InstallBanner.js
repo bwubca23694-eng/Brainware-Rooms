@@ -1,79 +1,125 @@
 import React, { useState, useEffect } from 'react';
-import { initInstallPrompt, triggerInstall, isInstalled, subscribeToPush, getPushStatus } from '../../utils/pwa';
-import api from '../../utils/api';
-import { useAuth } from '../../context/AuthContext';
+import { initInstallPrompt, triggerInstall, isInstalled } from '../../utils/pwa';
 import './InstallBanner.css';
 
+// Detect platform
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isAndroid = () => /android/i.test(navigator.userAgent);
+const isInStandaloneMode = () =>
+  window.matchMedia('(display-mode: standalone)').matches ||
+  window.navigator.standalone === true;
+
 export default function InstallBanner() {
-  const { user } = useAuth();
-  const [showInstall, setShowInstall] = useState(false);
-  const [showPush, setShowPush] = useState(false);
+  const [canInstall, setCanInstall] = useState(false);   // Android: native prompt available
+  const [showIOSGuide, setShowIOSGuide] = useState(false); // iOS: show manual steps
+  const [showGuide, setShowGuide] = useState(false);      // show the how-to sheet
   const [dismissed, setDismissed] = useState(false);
   const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
-    if (isInstalled()) return; // already installed
-    if (localStorage.getItem('bwu-install-dismissed')) return;
+    // Already installed as PWA — hide everything
+    if (isInStandaloneMode() || isInstalled()) return;
+    if (localStorage.getItem('bwu-install-dismissed-v2')) return;
 
-    initInstallPrompt(available => setShowInstall(available));
-
-    // Check push notification status for logged-in users
-    if (user) {
-      getPushStatus().then(({ supported, subscribed, permission }) => {
-        if (supported && !subscribed && permission === 'default') {
-          setShowPush(true);
-        }
-      });
+    // iOS: can't use native prompt, show manual guide instead
+    if (isIOS()) {
+      setShowIOSGuide(true);
+      return;
     }
-  }, [user]);
+
+    // Android Chrome: listen for native install prompt
+    initInstallPrompt(available => setCanInstall(available));
+  }, []);
 
   const handleInstall = async () => {
+    if (isIOS()) { setShowGuide(true); return; }
     setInstalling(true);
-    const accepted = await triggerInstall();
-    if (accepted) setShowInstall(false);
+    await triggerInstall();
     setInstalling(false);
-  };
-
-  const handleEnablePush = async () => {
-    const ok = await subscribeToPush(api);
-    if (ok) setShowPush(false);
+    setCanInstall(false);
   };
 
   const handleDismiss = () => {
     setDismissed(true);
-    localStorage.setItem('bwu-install-dismissed', '1');
+    localStorage.setItem('bwu-install-dismissed-v2', '1');
   };
 
-  if (dismissed || (!showInstall && !showPush)) return null;
+  // Nothing to show
+  if (dismissed || (!canInstall && !showIOSGuide)) return null;
 
   return (
-    <div className="install-banner">
-      <div className="install-banner-content">
-        <div className="install-banner-icon">
-          {showInstall ? '📲' : '🔔'}
+    <>
+      {/* Bottom install bar */}
+      <div className="install-bar">
+        <div className="install-bar-icon">
+          <img src="/icon-192.png" alt="BWU Rooms" />
         </div>
-        <div className="install-banner-text">
-          <strong>{showInstall ? 'Add BWU Rooms to your phone!' : 'Get instant notifications'}</strong>
-          <span>
-            {showInstall
-              ? 'Install the app for faster access — works offline too'
-              : 'Know immediately when your booking is confirmed'}
-          </span>
+        <div className="install-bar-text">
+          <strong>Install BWU Rooms</strong>
+          <span>Use it like a real app — no Play Store needed</span>
         </div>
-        <div className="install-banner-actions">
-          {showInstall && (
-            <button className="btn btn-primary btn-sm" onClick={handleInstall} disabled={installing}>
-              {installing ? 'Installing...' : '⬇️ Install'}
-            </button>
-          )}
-          {showPush && !showInstall && (
-            <button className="btn btn-primary btn-sm" onClick={handleEnablePush}>
-              🔔 Enable
-            </button>
-          )}
-          <button className="btn btn-ghost btn-sm" onClick={handleDismiss}>✕</button>
+        <div className="install-bar-actions">
+          <button className="install-btn-yes" onClick={handleInstall} disabled={installing}>
+            {installing ? '...' : 'Install'}
+          </button>
+          <button className="install-btn-no" onClick={handleDismiss}>✕</button>
         </div>
       </div>
-    </div>
+
+      {/* iOS how-to bottom sheet */}
+      {showGuide && (
+        <div className="install-sheet-overlay" onClick={() => setShowGuide(false)}>
+          <div className="install-sheet" onClick={e => e.stopPropagation()}>
+            <div className="install-sheet-handle" />
+            <div className="install-sheet-header">
+              <img src="/icon-192.png" alt="BWU Rooms" className="install-sheet-icon" />
+              <div>
+                <h3>Install BWU Rooms</h3>
+                <p>Works like a real app — fullscreen, no Chrome bar</p>
+              </div>
+            </div>
+
+            <div className="install-steps">
+              <div className="install-step">
+                <div className="install-step-num">1</div>
+                <div className="install-step-text">
+                  {isIOS()
+                    ? <>Tap the <strong>Share button</strong> <span className="install-step-icon">⎙</span> at the bottom of Safari</>
+                    : <>Tap the <strong>3-dot menu</strong> <span className="install-step-icon">⋮</span> in Chrome's top right</>
+                  }
+                </div>
+              </div>
+              <div className="install-step">
+                <div className="install-step-num">2</div>
+                <div className="install-step-text">
+                  {isIOS()
+                    ? <>Scroll down and tap <strong>"Add to Home Screen"</strong></>
+                    : <>Tap <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong></>
+                  }
+                </div>
+              </div>
+              <div className="install-step">
+                <div className="install-step-num">3</div>
+                <div className="install-step-text">
+                  Tap <strong>"Add"</strong> — BWU Rooms will appear on your home screen like any app 🎉
+                </div>
+              </div>
+            </div>
+
+            <div className="install-sheet-result">
+              <span>✅ Fullscreen</span>
+              <span>✅ No Chrome bar</span>
+              <span>✅ Works offline</span>
+              <span>✅ Push notifications</span>
+            </div>
+
+            <button className="btn btn-primary" style={{width:'100%', marginTop:'8px'}}
+              onClick={() => { setShowGuide(false); handleDismiss(); }}>
+              Got it!
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -1,40 +1,138 @@
-.install-banner {
+/* ── INSTALL BAR (bottom sticky) ──────────────────── */
+.install-bar {
   position: fixed;
-  bottom: 16px; left: 50%;
-  transform: translateX(-50%);
-  z-index: 9000;
-  width: calc(100% - 32px);
-  max-width: 560px;
-  animation: slideUp 0.4s var(--spring) forwards;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-.install-banner-content {
+  bottom: 0; left: 0; right: 0;
+  z-index: 9999;
   display: flex; align-items: center; gap: 12px;
-  padding: 14px 16px;
-  background: var(--bg-2);
-  border: 1.5px solid var(--border-accent);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg), 0 0 40px rgba(255,107,43,0.1);
-  backdrop-filter: blur(20px);
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background: var(--bg-1);
+  border-top: 1.5px solid var(--border-accent);
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.3);
+  animation: slideUpBar 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+@keyframes slideUpBar {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
-.install-banner-icon { font-size: 26px; flex-shrink: 0; }
-
-.install-banner-text {
-  flex: 1;
+.install-bar-icon img {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(255,107,43,0.3);
+  flex-shrink: 0;
+}
+.install-bar-text {
+  flex: 1; min-width: 0;
   display: flex; flex-direction: column; gap: 2px;
-  min-width: 0;
 }
-.install-banner-text strong { font-size: 13px; font-weight: 700; color: var(--text-1); }
-.install-banner-text span { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.install-bar-text strong {
+  font-size: 14px; font-weight: 800;
+  color: var(--text-1); white-space: nowrap;
+}
+.install-bar-text span {
+  font-size: 12px; color: var(--text-2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
-.install-banner-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+.install-bar-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.install-btn-yes {
+  padding: 9px 20px;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: var(--radius-pill);
+  font-family: var(--font-body); font-size: 13px; font-weight: 800;
+  cursor: pointer; transition: var(--t);
+  white-space: nowrap;
+}
+.install-btn-yes:hover { background: var(--accent-light); transform: scale(1.03); }
+.install-btn-yes:disabled { opacity: 0.6; }
+.install-btn-no {
+  width: 32px; height: 32px;
+  background: rgba(255,255,255,0.07); border: 1px solid var(--border);
+  border-radius: 50%; color: var(--text-2);
+  font-size: 13px; cursor: pointer; transition: var(--t);
+  display: flex; align-items: center; justify-content: center;
+}
+.install-btn-no:hover { background: rgba(255,255,255,0.12); }
 
-@media(max-width: 480px) {
-  .install-banner-text span { display: none; }
+
+/* ── HOW-TO BOTTOM SHEET ──────────────────────────── */
+.install-sheet-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: flex-end;
+  animation: fadeIn 0.2s ease forwards;
+}
+.install-sheet {
+  width: 100%;
+  background: var(--bg-1);
+  border-radius: 24px 24px 0 0;
+  padding: 12px 24px 32px;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
+  animation: sheetUp 0.35s cubic-bezier(0.34,1.4,0.64,1) forwards;
+}
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.install-sheet-handle {
+  width: 40px; height: 4px;
+  background: var(--border); border-radius: 2px;
+  margin: 0 auto 20px;
+}
+.install-sheet-header {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 24px;
+}
+.install-sheet-icon {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(255,107,43,0.3);
+  flex-shrink: 0;
+}
+.install-sheet-header h3 {
+  font-size: 20px; font-weight: 800;
+  margin: 0 0 4px;
+}
+.install-sheet-header p {
+  font-size: 13px; color: var(--text-2); margin: 0;
+}
+
+/* Steps */
+.install-steps { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+.install-step {
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.install-step-num {
+  width: 28px; height: 28px; flex-shrink: 0;
+  background: var(--accent-muted); border: 1.5px solid var(--border-accent);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; color: var(--accent);
+}
+.install-step-text {
+  font-size: 15px; color: var(--text-2); line-height: 1.5;
+  padding-top: 3px;
+}
+.install-step-text strong { color: var(--text-1); }
+.install-step-icon {
+  display: inline-block;
+  background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 1px 6px;
+  font-size: 16px;
+}
+
+/* Result pills */
+.install-sheet-result {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 20px;
+}
+.install-sheet-result span {
+  padding: 6px 12px;
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.2);
+  border-radius: var(--radius-pill);
+  font-size: 12px; font-weight: 700; color: #10b981;
 }

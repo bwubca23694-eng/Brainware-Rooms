@@ -1,20 +1,25 @@
 {
-  "name": "BWU Rooms — Brainware University Room Finder",
+  "name": "BWU Rooms",
   "short_name": "BWU Rooms",
   "description": "Find safe, affordable rooms near Brainware University. Zero brokerage.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
   "background_color": "#060b18",
-  "theme_color": "#ff6b2b",
+  "theme_color": "#060b18",
   "categories": ["lifestyle", "utilities"],
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
   ],
-  "screenshots": [],
   "shortcuts": [
-    { "name": "Browse Rooms", "short_name": "Browse", "description": "Find rooms near BWU", "url": "/rooms" },
-    { "name": "My Dashboard", "short_name": "Dashboard", "description": "View your bookings", "url": "/dashboard" }
-  ]
+    { "name": "Browse Rooms", "short_name": "Browse", "url": "/rooms", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "My Dashboard", "short_name": "Dashboard", "url": "/dashboard", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ],
+  "prefer_related_applications": false
 }
