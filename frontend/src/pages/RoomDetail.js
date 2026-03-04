@@ -94,11 +94,11 @@ export default function RoomDetail() {
     }
   };
 
-  const isNew = room.createdAt && (Date.now() - new Date(room.createdAt)) < 7 * 24 * 60 * 60 * 1000;
-  const hasVirtualTour = room.images?.length >= 5;
   if (loading) return <div className="loading-center" style={{ minHeight: '60vh' }}><div className="spinner"></div></div>;
   if (!room) return <div className="container" style={{ padding: '60px 0', textAlign: 'center' }}><h2>Room not found</h2><Link to="/rooms" className="btn btn-primary" style={{ marginTop: '16px' }}>Browse Rooms</Link></div>;
 
+  const isNew = room.createdAt && (Date.now() - new Date(room.createdAt)) < 7 * 24 * 60 * 60 * 1000;
+  const hasVirtualTour = room.images?.length >= 5;
   const imgs = room.images?.length ? room.images : [{ url: 'https://via.placeholder.com/800x500?text=No+Image' }];
 
   return (

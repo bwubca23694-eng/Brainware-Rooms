@@ -53,6 +53,29 @@ const PublicRoute = ({ children }) => {
 };
 
 function AppRoutes() {
+  const { loading } = useAuth();
+
+  // Show full-page spinner while auth token is being verified
+  // This prevents blank flashes on page navigation / refresh
+  if (loading) return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center', gap: '16px',
+      background: 'var(--bg-0)'
+    }}>
+      <div style={{
+        width: '44px', height: '44px',
+        border: '3px solid var(--border)',
+        borderTopColor: 'var(--accent)',
+        borderRadius: '50%',
+        animation: 'spin 0.65s linear infinite'
+      }} />
+      <span style={{ color: 'var(--text-3)', fontSize: '13px', fontWeight: 600 }}>
+        Loading BWU Rooms...
+      </span>
+    </div>
+  );
+
   return (
     <BrowserRouter>
       <Navbar />
