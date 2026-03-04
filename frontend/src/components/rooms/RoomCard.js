@@ -8,52 +8,77 @@ const amenityIcons = {
   bathroom: '🚿', balcony: '🌿', tv: '📺', geyser: '🔥', lift: '🛗',
 };
 
+const genderLabel = { any: '👥 All', male: '👨 Boys', female: '👩 Girls' };
+
+const typeColors = {
+  single: '#ff6b2b', double: '#3b82f6', hostel: '#10b981',
+  '1bhk': '#f59e0b', studio: '#8b5cf6', dormitory: '#ec4899',
+  triple: '#06b6d4', '2bhk': '#84cc16',
+};
+
 export default function RoomCard({ room }) {
-  const img = room.images?.[0]?.url || 'https://via.placeholder.com/400x250?text=No+Image';
-  
+  const img = room.images?.[0]?.url;
+  const topAmenities = room.amenities?.slice(0, 4) || [];
+  const extra = (room.amenities?.length || 0) - 4;
+  const typeColor = typeColors[room.type] || '#ff6b2b';
+
   return (
     <Link to={`/rooms/${room._id}`} className="room-card">
       <div className="room-card-image">
-        <img src={img} alt={room.title} loading="lazy" />
-        <div className="room-card-badges">
-          {room.availability ? (
-            <span className="badge badge-green">Available</span>
-          ) : (
-            <span className="badge badge-red">Occupied</span>
-          )}
-          <span className={`badge badge-blue`}>{room.type}</span>
+        {img
+          ? <img src={img} alt={room.title} loading="lazy" />
+          : <div className="room-no-img">🏠</div>
+        }
+
+        {/* Top badges */}
+        <div className="room-card-top-badges">
+          <span className={`badge ${room.availability ? 'badge-green' : 'badge-red'}`}>
+            {room.availability ? '✓ Available' : 'Occupied'}
+          </span>
+          <span className="badge" style={{ background: `${typeColor}18`, color: typeColor, border: `1px solid ${typeColor}35` }}>
+            {room.type}
+          </span>
         </div>
-        {room.distanceFromCollege && (
+
+        {/* Distance */}
+        {room.distanceFromCollege != null && (
           <div className="room-card-distance">
-            📍 {room.distanceFromCollege.toFixed(1)} km from college
+            📍 {room.distanceFromCollege.toFixed(1)} km from BWU
           </div>
         )}
       </div>
+
       <div className="room-card-body">
-        <h3 className="room-card-title">{room.title}</h3>
-        <p className="room-card-address">
-          {room.address?.area}, {room.address?.city}
-        </p>
-        <div className="room-card-amenities">
-          {room.amenities?.slice(0, 5).map(a => (
-            <span key={a} className="room-amenity-tag" title={a}>
-              {amenityIcons[a] || '✓'} {a}
-            </span>
-          ))}
-          {room.amenities?.length > 5 && (
-            <span className="room-amenity-tag">+{room.amenities.length - 5}</span>
-          )}
+        <div className="room-card-header">
+          <h3 className="room-card-title">{room.title}</h3>
+          <p className="room-card-address">
+            📌 {room.address?.area}{room.address?.city ? `, ${room.address.city}` : ''}
+          </p>
         </div>
+
+        {topAmenities.length > 0 && (
+          <div className="room-card-amenities">
+            {topAmenities.map(a => (
+              <span key={a} className="room-amenity">
+                {amenityIcons[a] || '✓'} {a}
+              </span>
+            ))}
+            {extra > 0 && <span className="room-amenity">+{extra} more</span>}
+          </div>
+        )}
+
         <div className="room-card-footer">
           <div className="room-card-rent">
             <span className="rent-amount">₹{room.rent?.toLocaleString()}</span>
-            <span className="rent-period">/month</span>
+            <span className="rent-period">/mo</span>
           </div>
-          <div className="room-card-meta">
+          <div className="room-card-right">
             {room.rating > 0 && (
               <span className="room-rating">⭐ {room.rating.toFixed(1)}</span>
             )}
-            <span className="room-gender-tag">{room.rules?.genderAllowed === 'any' ? '👥 All' : room.rules?.genderAllowed === 'male' ? '👨 Boys' : '👩 Girls'}</span>
+            <span className="room-gender">
+              {genderLabel[room.rules?.genderAllowed] || '👥 All'}
+            </span>
           </div>
         </div>
       </div>

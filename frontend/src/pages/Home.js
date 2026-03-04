@@ -4,144 +4,224 @@ import api from '../utils/api';
 import RoomCard from '../components/rooms/RoomCard';
 import './Home.css';
 
+const roomTypes = [
+  { type: 'single', label: 'Single Room', icon: '🛏️', color: '#ff6b2b' },
+  { type: 'double', label: 'Double Sharing', icon: '👥', color: '#3b82f6' },
+  { type: 'hostel', label: 'Hostel', icon: '🏨', color: '#10b981' },
+  { type: '1bhk', label: '1 BHK Flat', icon: '🏠', color: '#f59e0b' },
+  { type: 'studio', label: 'Studio', icon: '🏢', color: '#8b5cf6' },
+  { type: 'dormitory', label: 'Dormitory', icon: '🏫', color: '#ec4899' },
+];
+
+const amenityHighlights = [
+  { icon: '📶', label: 'Free WiFi', desc: 'High-speed internet' },
+  { icon: '🍽️', label: 'Mess Food', desc: 'Daily meals included' },
+  { icon: '🔒', label: 'Safe & Secure', desc: '24/7 security' },
+  { icon: '📍', label: '< 2 km Away', desc: 'Walking distance' },
+  { icon: '💰', label: 'No Brokerage', desc: 'Direct from owners' },
+  { icon: '✅', label: 'Verified Rooms', desc: 'Owner verified' },
+];
+
 export default function Home() {
   const navigate = useNavigate();
-  const [featuredRooms, setFeaturedRooms] = useState([]);
+  const [rooms, setRooms] = useState([]);
   const [search, setSearch] = useState('');
-  const [stats, setStats] = useState({ rooms: 0, students: 0, owners: 0 });
+  const [totalRooms, setTotalRooms] = useState(0);
 
   useEffect(() => {
-    api.get('/rooms?limit=6&sort=-views').then(res => setFeaturedRooms(res.data.rooms || [])).catch(() => {});
-    api.get('/rooms?limit=1').then(res => setStats(s => ({ ...s, rooms: res.data.total || 0 }))).catch(() => {});
+    api.get('/rooms?limit=6&sort=-views&status=approved').then(r => {
+      setRooms(r.data.rooms || []);
+      setTotalRooms(r.data.total || 0);
+    }).catch(() => {});
   }, []);
 
-  const handleSearch = (e) => {
+  const handleSearch = e => {
     e.preventDefault();
-    navigate(`/rooms?search=${search}`);
+    navigate(`/rooms${search ? `?search=${search}` : ''}`);
   };
-
-  const roomTypes = [
-    { type: 'single', label: 'Single Room', icon: '🛏️', desc: 'Private single occupancy' },
-    { type: 'double', label: 'Double Sharing', icon: '🛏️🛏️', desc: 'Affordable 2-person room' },
-    { type: 'hostel', label: 'Hostel', icon: '🏨', desc: 'Dormitory style stays' },
-    { type: '1bhk', label: '1 BHK', icon: '🏠', desc: 'Full apartment' },
-    { type: 'studio', label: 'Studio', icon: '🏢', desc: 'Compact studio flat' },
-    { type: 'dormitory', label: 'Dormitory', icon: '🏫', desc: 'Budget group accommodation' },
-  ];
 
   return (
     <div className="home">
-      {/* Hero */}
+
+      {/* ── HERO ─────────────────────────────────── */}
       <section className="hero">
-        <div className="hero-bg">
-          <div className="hero-grid"></div>
-          <div className="hero-glow"></div>
-        </div>
+        <div className="hero-bg-glow" />
+        <div className="hero-grid-overlay" />
+
         <div className="container hero-content">
-          <div className="hero-badge">
-            <span>📍</span> Near Brainware University, Barasat
-          </div>
-          <h1 className="hero-title">
-            Find Your Perfect<br />
-            <span className="hero-highlight">Student Home</span>
-          </h1>
-          <p className="hero-subtitle">
-            Discover verified rooms, hostels, and PGs near Brainware University. 
-            Safe, affordable, and student-friendly.
-          </p>
-          <form className="hero-search" onSubmit={handleSearch}>
-            <div className="hero-search-inner">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <input
-                type="text"
-                placeholder="Search by area, type, or keyword..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="hero-search-input"
-              />
+          <div className="hero-left">
+            <div className="hero-pill animate-in" style={{ animationDelay: '0ms' }}>
+              <span className="hero-pill-dot" />
+              📍 Near Brainware University, Barasat
             </div>
-            <button type="submit" className="btn btn-primary btn-lg">Search Rooms</button>
-          </form>
-          <div className="hero-stats">
-            <div><strong>{stats.rooms}+</strong> <span>Listed Rooms</span></div>
-            <div><strong>100%</strong> <span>Verified Owners</span></div>
-            <div><strong>0</strong> <span>Brokerage</span></div>
+
+            <h1 className="hero-title animate-in" style={{ animationDelay: '80ms' }}>
+              Your Home Away<br />
+              <span className="hero-title-gradient">From Home</span>
+            </h1>
+
+            <p className="hero-desc animate-in" style={{ animationDelay: '140ms' }}>
+              Find safe, affordable rooms & hostels near Brainware University.
+              Trusted by hundreds of BWU students — zero brokerage, direct owner contact.
+            </p>
+
+            <form className="hero-search animate-in" onSubmit={handleSearch} style={{ animationDelay: '200ms' }}>
+              <div className="hero-search-field">
+                <span className="hero-search-icon">🔍</span>
+                <input
+                  className="hero-search-input"
+                  placeholder="Search area, type, price..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+              </div>
+              <button type="submit" className="btn btn-primary btn-lg hero-search-btn">
+                Find Rooms
+              </button>
+            </form>
+
+            <div className="hero-stats animate-in" style={{ animationDelay: '260ms' }}>
+              <div className="hero-stat">
+                <span className="hero-stat-num">{totalRooms > 0 ? `${totalRooms}+` : '50+'}</span>
+                <span className="hero-stat-lbl">Listed Rooms</span>
+              </div>
+              <div className="hero-stat-div" />
+              <div className="hero-stat">
+                <span className="hero-stat-num">100%</span>
+                <span className="hero-stat-lbl">Verified Owners</span>
+              </div>
+              <div className="hero-stat-div" />
+              <div className="hero-stat">
+                <span className="hero-stat-num">₹0</span>
+                <span className="hero-stat-lbl">Brokerage Fee</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="hero-right animate-in" style={{ animationDelay: '100ms' }}>
+            <div className="hero-card hero-card-main">
+              <div className="hero-card-image">🏠</div>
+              <div className="hero-card-info">
+                <div className="hero-card-title">Cozy Single Room</div>
+                <div className="hero-card-addr">Nabapally, Barasat</div>
+                <div className="hero-card-row">
+                  <span className="hero-card-price">₹4,500<span>/mo</span></span>
+                  <span className="badge badge-green">Available</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="hero-float-badge hero-badge-distance">
+              📍 1.2 km from BWU
+            </div>
+            <div className="hero-float-badge hero-badge-wifi">
+              📶 Free WiFi
+            </div>
+            <div className="hero-float-badge hero-badge-verified">
+              ✅ Verified
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Room Types */}
+      {/* ── TRUST BAR ────────────────────────────── */}
+      <div className="trust-bar">
+        <div className="container trust-inner">
+          {amenityHighlights.map(a => (
+            <div key={a.label} className="trust-item">
+              <span className="trust-icon">{a.icon}</span>
+              <div>
+                <div className="trust-label">{a.label}</div>
+                <div className="trust-desc">{a.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── ROOM TYPES ───────────────────────────── */}
       <section className="section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Room Types</h2>
-            <p className="section-sub">Browse by accommodation type</p>
+            <div>
+              <h2 className="section-title">Browse by Type</h2>
+              <p style={{ color: 'var(--text-2)', fontSize: '14px', marginTop: '4px' }}>Find exactly what suits your budget and lifestyle</p>
+            </div>
+            <Link to="/rooms" className="btn btn-ghost btn-sm">See All →</Link>
           </div>
           <div className="types-grid">
             {roomTypes.map(rt => (
               <Link key={rt.type} to={`/rooms?type=${rt.type}`} className="type-card">
-                <div className="type-icon">{rt.icon}</div>
-                <div className="type-label">{rt.label}</div>
-                <div className="type-desc">{rt.desc}</div>
+                <div className="type-icon-wrap" style={{ background: `${rt.color}15`, border: `1px solid ${rt.color}30` }}>
+                  <span className="type-icon">{rt.icon}</span>
+                </div>
+                <span className="type-label">{rt.label}</span>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Featured Rooms */}
-      {featuredRooms.length > 0 && (
-        <section className="section">
+      {/* ── FEATURED ROOMS ───────────────────────── */}
+      {rooms.length > 0 && (
+        <section className="section" style={{ paddingTop: 0 }}>
           <div className="container">
             <div className="section-header">
-              <h2 className="section-title">Featured Rooms</h2>
+              <div>
+                <h2 className="section-title">🔥 Popular Near BWU</h2>
+                <p style={{ color: 'var(--text-2)', fontSize: '14px', marginTop: '4px' }}>Most viewed rooms this week</p>
+              </div>
               <Link to="/rooms" className="btn btn-outline btn-sm">View All →</Link>
             </div>
             <div className="rooms-grid">
-              {featuredRooms.map(room => <RoomCard key={room._id} room={room} />)}
+              {rooms.map(room => <RoomCard key={room._id} room={room} />)}
             </div>
           </div>
         </section>
       )}
 
-      {/* How it works */}
+      {/* ── HOW IT WORKS ─────────────────────────── */}
       <section className="section how-section">
         <div className="container">
-          <h2 className="section-title text-center">How It Works</h2>
+          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+            <h2 className="section-title">How It Works</h2>
+            <p style={{ color: 'var(--text-2)', marginTop: '10px', fontSize: '15px' }}>Move into your new room in 3 simple steps</p>
+          </div>
           <div className="how-grid">
-            <div className="how-card">
-              <div className="how-num">01</div>
-              <h3>Search Rooms</h3>
-              <p>Browse available rooms near Brainware University filtered by type, price, and amenities.</p>
-            </div>
-            <div className="how-card">
-              <div className="how-num">02</div>
-              <h3>Connect with Owner</h3>
-              <p>Contact verified room owners directly or send a booking request through our platform.</p>
-            </div>
-            <div className="how-card">
-              <div className="how-num">03</div>
-              <h3>Move In</h3>
-              <p>Visit the property, confirm the booking, and move into your new student home.</p>
+            {[
+              { num: '01', icon: '🔍', title: 'Search Rooms', desc: 'Filter by distance, price, type, and amenities. Find rooms within walking distance from BWU.' },
+              { num: '02', icon: '💬', title: 'Contact Owner', desc: 'Directly call or WhatsApp the owner. No middleman, no brokerage — completely free.' },
+              { num: '03', icon: '🏠', title: 'Move In!', desc: 'Visit the room, confirm booking through the app, and get settled in your new home.' },
+            ].map((step, i) => (
+              <div key={i} className="how-card">
+                <div className="how-num">{step.num}</div>
+                <div className="how-icon">{step.icon}</div>
+                <h3>{step.title}</h3>
+                <p>{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── OWNER CTA ────────────────────────────── */}
+      <section className="section" style={{ paddingTop: 0 }}>
+        <div className="container">
+          <div className="owner-cta">
+            <div className="owner-cta-emoji">🏠</div>
+            <div className="owner-cta-text">
+              <div className="owner-cta-pill">For Property Owners</div>
+              <h2>Got a Room Near BWU?</h2>
+              <p>List your property for free and get direct bookings from Brainware University students. No commission, no middleman — just students looking for a home.</p>
+              <div className="owner-cta-actions">
+                <Link to="/register?role=owner" className="btn btn-primary btn-lg">List Property Free →</Link>
+                <Link to="/rooms" className="btn btn-ghost">See Example Listings</Link>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA for owners */}
-      <section className="section">
-        <div className="container">
-          <div className="owner-cta">
-            <div>
-              <h2>Are you a Room Owner?</h2>
-              <p>List your property for free and connect with thousands of Brainware students looking for accommodation.</p>
-            </div>
-            <Link to="/register?role=owner" className="btn btn-primary btn-lg">List Your Property →</Link>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

@@ -7,32 +7,38 @@ export default function Footer() {
     <footer className="footer">
       <div className="container footer-inner">
         <div className="footer-brand">
-          <div className="footer-logo">
-            <span className="brand-dot"></span>
-            Brainware<span style={{ color: 'var(--accent)' }}> Rooms</span>
+          <div className="footer-logo">🏠</div>
+          <div>
+            <div className="footer-name">BWU Rooms</div>
+            <div className="footer-tagline">Find your home near Brainware University</div>
           </div>
-          <p>The easiest way to find rooms and hostels near Brainware University, Barasat.</p>
         </div>
+
         <div className="footer-links">
-          <div>
-            <h4>Students</h4>
+          <div className="footer-col">
+            <div className="footer-col-title">For Students</div>
             <Link to="/rooms">Browse Rooms</Link>
-            <Link to="/register">Create Account</Link>
+            <Link to="/rooms?type=hostel">Hostels</Link>
+            <Link to="/rooms?type=single">Single Rooms</Link>
+            <Link to="/rooms?type=double">Shared Rooms</Link>
           </div>
-          <div>
-            <h4>Property Owners</h4>
+          <div className="footer-col">
+            <div className="footer-col-title">For Owners</div>
             <Link to="/register?role=owner">List Property</Link>
-            <Link to="/login">Owner Login</Link>
+            <Link to="/owner/dashboard">Owner Dashboard</Link>
           </div>
-          <div>
-            <h4>Contact</h4>
-            <a href="mailto:noreplysoftsensepvtltd@gmail.com">Email Support</a>
-            <span>Brainware University, Barasat</span>
+          <div className="footer-col">
+            <div className="footer-col-title">Account</div>
+            <Link to="/login">Sign In</Link>
+            <Link to="/register">Register</Link>
           </div>
         </div>
       </div>
       <div className="footer-bottom">
-        <p>&copy; {new Date().getFullYear()} Brainware Rooms. Built for Brainware University Students.</p>
+        <div className="container">
+          <span>© {new Date().getFullYear()} BWU Rooms • Built for Brainware University Students, Barasat</span>
+          <span style={{ color: 'var(--text-3)' }}>Made with ❤️ in West Bengal</span>
+        </div>
       </div>
     </footer>
   );
