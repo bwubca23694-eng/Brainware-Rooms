@@ -6,6 +6,7 @@ const reviewSchema = new mongoose.Schema({
   rating: { type: Number, required: true, min: 1, max: 5 },
   comment: { type: String, required: true },
   images: [String],
+  isVerifiedTenant: { type: Boolean, default: false },
   isApproved: { type: Boolean, default: true },
 }, { timestamps: true });
 

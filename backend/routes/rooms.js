@@ -13,6 +13,6 @@ router.get('/:id', getRoom);
 router.post('/', protect, authorize('owner', 'admin'), upload.array('images', 10), createRoom);
 router.put('/:id', protect, authorize('owner', 'admin'), upload.array('images', 10), updateRoom);
 router.delete('/:id', protect, authorize('owner', 'admin'), deleteRoom);
-router.post('/:id/reviews', protect, authorize('student'), addReview);
+router.post('/:id/reviews', protect, authorize('student'), upload.array('images', 3), addReview);
 
 module.exports = router;

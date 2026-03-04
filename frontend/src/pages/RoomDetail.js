@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import './RoomDetail.css';
+import { getSemesterBreakdown, getResponseLabel } from '../utils/roomHelpers';
 
 const amenityIcons = {
   wifi: '📶', ac: '❄️', parking: '🅿️', laundry: '🧺', mess: '🍽️',
@@ -23,6 +24,8 @@ export default function RoomDetail() {
   const [booking, setBooking] = useState({ moveInDate: '', duration: 1, message: '' });
   const [submitting, setSubmitting] = useState(false);
   const [review, setReview] = useState({ rating: 5, comment: '' });
+  const [reviewPhotos, setReviewPhotos] = useState([]);
+  const [photoPreview, setPhotoPreview] = useState([]);
 
   useEffect(() => {
     api.get(`/rooms/${id}`)
@@ -50,13 +53,27 @@ export default function RoomDetail() {
     e.preventDefault();
     if (!user) return navigate('/login');
     try {
-      const res = await api.post(`/rooms/${id}/reviews`, review);
+      const formData = new FormData();
+      formData.append('rating', review.rating);
+      formData.append('comment', review.comment);
+      reviewPhotos.forEach(p => formData.append('images', p));
+      const res = await api.post(`/rooms/${id}/reviews`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       setReviews(prev => [res.data.review, ...prev]);
       setReview({ rating: 5, comment: '' });
-      toast.success('Review submitted!');
+      setReviewPhotos([]);
+      setPhotoPreview([]);
+      toast.success('✅ Review submitted!');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to submit review');
     }
+  };
+
+  const handleReviewPhotos = (e) => {
+    const files = Array.from(e.target.files).slice(0, 3);
+    setReviewPhotos(files);
+    setPhotoPreview(files.map(f => URL.createObjectURL(f)));
   };
 
 
@@ -199,6 +216,10 @@ export default function RoomDetail() {
                   <div style={{ fontWeight: 600 }}>{room.owner?.businessName || room.owner?.name}</div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Property Owner</div>
                   {room.owner?.isOwnerApproved && <span className="badge badge-green" style={{ marginTop: '4px' }}>✓ Verified</span>}
+                  {(() => {
+                    const resp = getResponseLabel(room.owner?.avgResponseTime);
+                    return resp ? <div style={{fontSize:'11px',color:resp.color,fontWeight:700,marginTop:'4px'}}>{resp.label}</div> : null;
+                  })()}
                 </div>
                 {room.contactPhone && (
                   <a href={`tel:${room.contactPhone}`} className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }}>
@@ -224,9 +245,27 @@ export default function RoomDetail() {
                           onClick={() => setReview(r => ({ ...r, rating: s }))}>⭐</button>
                       ))}
                     </div>
-                    <textarea className="form-input" placeholder="Share your experience..." rows={3}
+                    <textarea className="form-input" placeholder="Share your experience — room condition, owner behaviour, locality..." rows={3}
                       value={review.comment} onChange={e => setReview(r => ({ ...r, comment: e.target.value }))} required />
-                    <button type="submit" className="btn btn-primary btn-sm" style={{ marginTop: '10px' }}>Post Review</button>
+                    <div style={{marginTop:'8px'}}>
+                      <label style={{fontSize:'12px',fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'0.6px',display:'block',marginBottom:'8px'}}>
+                        Add Photos (up to 3) — Real room photos build trust!
+                      </label>
+                      <label style={{display:'inline-flex',alignItems:'center',gap:'7px',padding:'8px 14px',background:'rgba(255,255,255,0.04)',border:'1.5px dashed var(--border)',borderRadius:'var(--radius)',cursor:'pointer',fontSize:'13px',color:'var(--text-2)',fontWeight:600,transition:'var(--t)'}}>
+                        📸 Choose Photos
+                        <input type="file" accept="image/*" multiple style={{display:'none'}} onChange={handleReviewPhotos} />
+                      </label>
+                      {photoPreview.length > 0 && (
+                        <div style={{display:'flex',gap:'8px',marginTop:'10px',flexWrap:'wrap'}}>
+                          {photoPreview.map((p,i) => (
+                            <div key={i} style={{width:'72px',height:'72px',borderRadius:'var(--radius-sm)',overflow:'hidden',border:'1px solid var(--border)'}}>
+                              <img src={p} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <button type="submit" className="btn btn-primary btn-sm" style={{ marginTop: '10px' }}>⭐ Post Review</button>
                   </form>
                 )}
                 <div className="reviews-list">
@@ -235,14 +274,29 @@ export default function RoomDetail() {
                       <div className="review-header">
                         <div className="review-avatar">{r.student?.avatar ? <img src={r.student.avatar} alt="" /> : r.student?.name?.[0]}</div>
                         <div>
-                          <div style={{ fontWeight: 600, fontSize: '14px' }}>{r.student?.name}</div>
-                          <div>{'⭐'.repeat(r.rating)}</div>
+                          <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                            <span style={{ fontWeight: 600, fontSize: '14px' }}>{r.student?.name}</span>
+                            {r.isVerifiedTenant && <span style={{fontSize:'10px',background:'var(--green-muted)',color:'var(--green)',border:'1px solid rgba(16,185,129,0.2)',borderRadius:'var(--radius-pill)',padding:'2px 7px',fontWeight:700}}>✅ Verified Tenant</span>}
+                          </div>
+                          <div style={{marginTop:'2px'}}>{'⭐'.repeat(r.rating)}</div>
                         </div>
                         <span style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: '12px' }}>
                           {new Date(r.createdAt).toLocaleDateString('en-IN')}
                         </span>
                       </div>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '8px' }}>{r.comment}</p>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '8px', lineHeight: '1.7' }}>{r.comment}</p>
+                      {r.images?.length > 0 && (
+                        <div style={{display:'flex',gap:'8px',marginTop:'10px',flexWrap:'wrap'}}>
+                          {r.images.map((img,i) => (
+                            <a key={i} href={img} target="_blank" rel="noopener noreferrer"
+                              style={{width:'80px',height:'80px',borderRadius:'var(--radius-sm)',overflow:'hidden',display:'block',border:'1px solid var(--border)',flexShrink:0}}>
+                              <img src={img} alt="Review photo" style={{width:'100%',height:'100%',objectFit:'cover',transition:'transform 0.2s'}}
+                                onMouseEnter={e=>e.target.style.transform='scale(1.05)'}
+                                onMouseLeave={e=>e.target.style.transform='scale(1)'} />
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                   {reviews.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>No reviews yet. Be the first!</p>}
@@ -255,9 +309,55 @@ export default function RoomDetail() {
           <aside className="booking-sidebar">
             <div className="booking-card">
               <h3>Request Booking</h3>
-              <div style={{ margin: '12px 0', fontSize: '24px', fontWeight: 800, fontFamily: 'var(--font-heading)' }}>
-                ₹{room.rent?.toLocaleString()} <span style={{ fontSize: '14px', fontWeight: 400, color: 'var(--text-muted)' }}>/month</span>
-              </div>
+
+              {/* Semester pricing breakdown */}
+              {(() => {
+                const bd = getSemesterBreakdown(room.rent, room.deposit);
+                return (
+                  <div className="semester-pricing">
+                    <div className="semester-price-main">
+                      <span className="semester-monthly">₹{bd.monthly?.toLocaleString()}</span>
+                      <span className="semester-per">/month</span>
+                    </div>
+                    <div className="semester-breakdown">
+                      <div className="semester-row">
+                        <span>Per semester (6 months)</span>
+                        <strong>₹{bd.semester?.toLocaleString()}</strong>
+                      </div>
+                      {bd.deposit > 0 && (
+                        <div className="semester-row">
+                          <span>Security deposit</span>
+                          <strong>₹{bd.deposit?.toLocaleString()}</strong>
+                        </div>
+                      )}
+                      {bd.deposit > 0 && (
+                        <div className="semester-row semester-total">
+                          <span>First payment total</span>
+                          <strong style={{color:'var(--accent)'}}>₹{bd.firstPayment?.toLocaleString()}</strong>
+                        </div>
+                      )}
+                      <div className="semester-row" style={{fontSize:'11px',color:'var(--text-3)'}}>
+                        <span>Per day equivalent</span>
+                        <span>~₹{bd.perDay}/day</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Owner response rate */}
+              {(() => {
+                const resp = getResponseLabel(room.owner?.avgResponseTime);
+                return resp ? (
+                  <div style={{
+                    display:'inline-flex',alignItems:'center',gap:'6px',
+                    padding:'6px 12px',borderRadius:'var(--radius-pill)',
+                    background:resp.bg,border:`1px solid ${resp.color}30`,
+                    fontSize:'12px',fontWeight:700,color:resp.color,
+                    marginBottom:'4px'
+                  }}>{resp.label}</div>
+                ) : null;
+              })()}
               {user?.role === 'student' ? (
                 <form onSubmit={handleBooking} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div className="form-group">

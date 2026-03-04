@@ -29,6 +29,9 @@ app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/owner', require('./routes/owner'));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/roommates', require('./routes/roommates'));
+app.use('/api/alerts', require('./routes/alerts'));
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'OK', message: 'Server running' }));

@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema({
   businessAddress: String,
   idProof: String,
   isOwnerApproved: { type: Boolean, default: false },
+  avgResponseTime: { type: Number, default: null }, // minutes
   savedRooms: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Room' }],
 }, { timestamps: true });
 

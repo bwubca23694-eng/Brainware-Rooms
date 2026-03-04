@@ -1,65 +1,37 @@
 const User = require('../models/User');
 const Room = require('../models/Room');
 const Booking = require('../models/Booking');
-const Review = require('../models/Review');
+const { checkAlertsForRoom } = require('../utils/checkAlerts');
+const { sendToUser } = require('../utils/pushNotify');
 
-exports.getDashboard = async (req, res) => {
+// getDashboard (also exported as getDashboardStats for compatibility)
+exports.getDashboard = exports.getDashboardStats = async (req, res) => {
   try {
-    const [totalUsers, totalRooms, totalBookings, pendingRooms, pendingOwners] = await Promise.all([
+    const [users, rooms, bookings, pendingRooms] = await Promise.all([
       User.countDocuments(),
-      Room.countDocuments(),
+      Room.countDocuments({ status: 'approved' }),
       Booking.countDocuments(),
       Room.countDocuments({ status: 'pending' }),
-      User.countDocuments({ role: 'owner', isOwnerApproved: false }),
     ]);
-
-    const recentRooms = await Room.find({ status: 'pending' })
-      .populate('owner', 'name email')
-      .sort('-createdAt')
-      .limit(5);
-    
-    const recentBookings = await Booking.find()
-      .populate('room', 'title')
-      .populate('student', 'name')
-      .sort('-createdAt')
-      .limit(5);
-
-    const monthlyStats = await Booking.aggregate([
-      { $group: { 
-        _id: { month: { $month: '$createdAt' }, year: { $year: '$createdAt' } },
-        count: { $sum: 1 },
-        revenue: { $sum: '$totalAmount' }
-      }},
-      { $sort: { '_id.year': -1, '_id.month': -1 } },
-      { $limit: 6 }
-    ]);
-
-    res.json({ success: true, stats: { totalUsers, totalRooms, totalBookings, pendingRooms, pendingOwners }, recentRooms, recentBookings, monthlyStats });
+    res.json({ success: true, stats: { users, rooms, bookings, pendingRooms } });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-exports.getUsers = async (req, res) => {
+// getUsers (also getAllUsers)
+exports.getUsers = exports.getAllUsers = async (req, res) => {
   try {
-    const { role, page = 1, limit = 20, search } = req.query;
-    const query = {};
-    if (role) query.role = role;
-    if (search) query.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } }
-    ];
-    const total = await User.countDocuments(query);
-    const users = await User.find(query).sort('-createdAt').skip((page-1)*limit).limit(Number(limit));
-    res.json({ success: true, users, total });
+    const users = await User.find().select('-password').sort('-createdAt');
+    res.json({ success: true, users });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-exports.updateUser = async (req, res) => {
+exports.updateUser = exports.updateUserStatus = async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true }).select('-password');
     res.json({ success: true, user });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -75,10 +47,30 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+exports.approveOwner = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isOwnerApproved: true },
+      { new: true }
+    ).select('-password');
+    // Notify owner via push
+    sendToUser(req.params.id, {
+      title: '🎉 Owner Account Approved!',
+      body: 'You can now list rooms on BWU Rooms',
+      url: '/owner/dashboard',
+      tag: 'owner-approved',
+    });
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 exports.getPendingRooms = async (req, res) => {
   try {
     const rooms = await Room.find({ status: 'pending' })
-      .populate('owner', 'name email phone businessName isOwnerApproved')
+      .populate('owner', 'name email businessName')
       .sort('-createdAt');
     res.json({ success: true, rooms });
   } catch (err) {
@@ -88,31 +80,38 @@ exports.getPendingRooms = async (req, res) => {
 
 exports.getAllRooms = async (req, res) => {
   try {
-    const { status, page = 1, limit = 20 } = req.query;
-    const query = status ? { status } : {};
-    const total = await Room.countDocuments(query);
-    const rooms = await Room.find(query).populate('owner', 'name email').sort('-createdAt').skip((page-1)*limit).limit(Number(limit));
-    res.json({ success: true, rooms, total });
+    const rooms = await Room.find()
+      .populate('owner', 'name email')
+      .sort('-createdAt');
+    res.json({ success: true, rooms });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-exports.reviewRoom = async (req, res) => {
+// reviewRoom (approve/reject) — also exported as updateRoomStatus
+exports.reviewRoom = exports.updateRoomStatus = async (req, res) => {
   try {
-    const { status, adminNote } = req.body;
-    const room = await Room.findByIdAndUpdate(req.params.id, { status, adminNote }, { new: true }).populate('owner', 'name email');
+    const room = await Room.findByIdAndUpdate(
+      req.params.id,
+      { status: req.body.status },
+      { new: true }
+    ).populate('owner', 'name email');
+
     if (!room) return res.status(404).json({ success: false, message: 'Room not found' });
-    res.json({ success: true, room });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
 
-exports.approveOwner = async (req, res) => {
-  try {
-    const user = await User.findByIdAndUpdate(req.params.id, { isOwnerApproved: req.body.approved }, { new: true });
-    res.json({ success: true, user });
+    // When approved — check saved alerts & notify owner
+    if (req.body.status === 'approved') {
+      checkAlertsForRoom(room); // non-blocking, no await
+      sendToUser(room.owner._id, {
+        title: '🎉 Room Approved!',
+        body: `"${room.title}" is now live on BWU Rooms`,
+        url: '/owner/rooms',
+        tag: 'room-approved',
+      });
+    }
+
+    res.json({ success: true, room });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -121,11 +120,10 @@ exports.approveOwner = async (req, res) => {
 exports.getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.find()
-      .populate('room', 'title rent')
+      .populate('room', 'title')
       .populate('student', 'name email')
       .populate('owner', 'name email')
-      .sort('-createdAt')
-      .limit(100);
+      .sort('-createdAt');
     res.json({ success: true, bookings });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

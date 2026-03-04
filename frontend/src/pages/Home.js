@@ -27,8 +27,10 @@ export default function Home() {
   const [rooms, setRooms] = useState([]);
   const [search, setSearch] = useState('');
   const [totalRooms, setTotalRooms] = useState(0);
+  const [recentRooms, setRecentRooms] = useState([]);
 
   useEffect(() => {
+    api.get('/rooms?limit=3&sort=-createdAt&status=approved').then(r => setRecentRooms(r.data.rooms || [])).catch(() => {});
     api.get('/rooms?limit=6&sort=-views&status=approved').then(r => {
       setRooms(r.data.rooms || []);
       setTotalRooms(r.data.total || 0);

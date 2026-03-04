@@ -27,9 +27,8 @@ export default function Navbar() {
         </Link>
 
         <div className={`navbar-links ${menuOpen ? 'open' : ''}`}>
-          <Link to="/rooms" className={isActive('/rooms') ? 'active-nav' : ''} onClick={() => setMenuOpen(false)}>
-            Browse Rooms
-          </Link>
+          <Link to="/rooms" className={isActive('/rooms') ? 'active-nav' : ''} onClick={() => setMenuOpen(false)}>Browse Rooms</Link>
+          <Link to="/roommates" className={isActive('/roommates') ? 'active-nav' : ''} onClick={() => setMenuOpen(false)}>🤝 Roommates</Link>
           {!user && <Link to="/register?role=owner" onClick={() => setMenuOpen(false)}>List Property</Link>}
           {user?.role === 'owner' && <Link to="/owner/rooms/add" onClick={() => setMenuOpen(false)}>+ Add Room</Link>}
           {user?.role === 'admin' && <Link to="/admin/dashboard" onClick={() => setMenuOpen(false)}>Admin</Link>}

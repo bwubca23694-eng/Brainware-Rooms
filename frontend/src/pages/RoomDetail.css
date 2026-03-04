@@ -79,3 +79,32 @@
   .booking-sidebar { order: -1; }
   .booking-card { position: static; }
 }
+
+/* ── SEMESTER PRICING ─────────────────────── */
+.semester-pricing {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin: 12px 0;
+}
+.semester-price-main {
+  display: flex; align-items: baseline; gap: 6px;
+  margin-bottom: 14px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.semester-monthly {
+  font-family: var(--font-display); font-size: 28px; font-weight: 800;
+  color: var(--accent); letter-spacing: -0.5px;
+}
+.semester-per { font-size: 14px; color: var(--text-3); font-weight: 500; }
+.semester-breakdown { display: flex; flex-direction: column; gap: 9px; }
+.semester-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 13px; color: var(--text-2);
+}
+.semester-row strong { font-weight: 700; color: var(--text-1); }
+.semester-total {
+  padding-top: 9px; border-top: 1px solid var(--border);
+  font-size: 14px; font-weight: 700; color: var(--text-1);
+}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './RoomCard.css';
+import { getResponseLabel } from '../../utils/roomHelpers';
 
 const amenityIcons = {
   wifi: '📶', ac: '❄️', parking: '🅿️', laundry: '🧺', mess: '🍽️',
@@ -71,6 +72,11 @@ export default function RoomCard({ room }) {
           </div>
         )}
 
+        {room.rent && (
+          <div style={{fontSize:'11px',color:'var(--text-3)',fontWeight:600,marginTop:'2px'}}>
+            ₹{(room.rent * 6).toLocaleString()} per semester
+          </div>
+        )}
         <div className="room-card-footer">
           <div className="room-card-rent">
             <span className="rent-amount">₹{room.rent?.toLocaleString()}</span>

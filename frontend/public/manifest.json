@@ -1,0 +1,20 @@
+{
+  "name": "BWU Rooms — Brainware University Room Finder",
+  "short_name": "BWU Rooms",
+  "description": "Find safe, affordable rooms near Brainware University. Zero brokerage.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#060b18",
+  "theme_color": "#ff6b2b",
+  "categories": ["lifestyle", "utilities"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    { "name": "Browse Rooms", "short_name": "Browse", "description": "Find rooms near BWU", "url": "/rooms" },
+    { "name": "My Dashboard", "short_name": "Dashboard", "description": "View your bookings", "url": "/dashboard" }
+  ]
+}

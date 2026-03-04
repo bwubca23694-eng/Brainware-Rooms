@@ -33,7 +33,9 @@ import AdminRooms from './pages/admin/Rooms';
 import AdminUsers from './pages/admin/Users';
 import AdminBookings from './pages/admin/Bookings';
 
+import Roommates from './pages/Roommates';
 import Navbar from './components/common/Navbar';
+import InstallBanner from './components/common/InstallBanner';
 import Footer from './components/common/Footer';
 
 const ProtectedRoute = ({ children, role }) => {
@@ -58,6 +60,7 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/rooms" element={<Rooms />} />
         <Route path="/rooms/:id" element={<RoomDetail />} />
+        <Route path="/roommates" element={<Roommates />} />
         <Route path="/verify-email/:token" element={<VerifyEmail />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/auth/google/success" element={<GoogleSuccess />} />
@@ -86,6 +89,7 @@ function AppRoutes() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Footer />
+      <InstallBanner />
       <ToastContainer position="top-right" theme="dark" />
     </BrowserRouter>
   );
