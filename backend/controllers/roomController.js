@@ -66,16 +66,21 @@ exports.createRoom = async (req, res) => {
   try {
     const roomData = { ...req.body, owner: req.user._id };
 
+    // Parse JSON strings sent from multipart/form-data
+    if (typeof roomData.address === 'string')  roomData.address  = JSON.parse(roomData.address);
+    if (typeof roomData.rules === 'string')    roomData.rules    = JSON.parse(roomData.rules);
+    if (typeof roomData.location === 'string') roomData.location = JSON.parse(roomData.location);
+
     if (req.files?.length) {
       roomData.images = req.files.map(f => ({ url: f.path, publicId: f.filename }));
     }
 
-    if (req.body.location?.coordinates) {
-      const [lng, lat] = req.body.location.coordinates;
+    if (roomData.location?.coordinates) {
+      const [lng, lat] = roomData.location.coordinates;
       const R = 6371;
-      const dLat = (22.7225 - lat) * Math.PI / 180;
-      const dLng = (88.4821 - lng) * Math.PI / 180;
-      const a = Math.sin(dLat/2)**2 + Math.cos(lat*Math.PI/180) * Math.cos(22.7225*Math.PI/180) * Math.sin(dLng/2)**2;
+      const dLat = (22.7320 - lat) * Math.PI / 180;
+      const dLng = (88.4998 - lng) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat*Math.PI/180) * Math.cos(22.7320*Math.PI/180) * Math.sin(dLng/2)**2;
       roomData.distanceFromCollege = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
@@ -104,6 +109,12 @@ exports.updateRoom = async (req, res) => {
     }
 
     const updates = { ...req.body };
+
+    // Parse JSON strings from multipart/form-data
+    if (typeof updates.address === 'string')  updates.address  = JSON.parse(updates.address);
+    if (typeof updates.rules === 'string')    updates.rules    = JSON.parse(updates.rules);
+    if (typeof updates.location === 'string') updates.location = JSON.parse(updates.location);
+
     if (req.files?.length) {
       updates.images = [...(room.images || []), ...req.files.map(f => ({ url: f.path, publicId: f.filename }))];
     }

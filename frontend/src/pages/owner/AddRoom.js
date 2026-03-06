@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../../utils/api';
 import './RoomForm.css';
+import LocationPicker from '../../components/common/LocationPicker';
 
 const AMENITIES = ['wifi', 'ac', 'parking', 'laundry', 'mess', 'security', 'cctv', 'gym', 'furnished', 'semifurnished', 'kitchen', 'bathroom', 'balcony', 'tv', 'geyser', 'purifier', 'powerbackup', 'lift'];
 
@@ -10,6 +11,7 @@ export default function AddRoom() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState([]);
+  const [location, setLocation] = useState({ coordinates: [88.4821, 22.7225] });
   const [form, setForm] = useState({
     title: '', description: '', type: 'single', rent: '', deposit: '',
     address: { street: '', area: '', city: 'Barasat', state: 'West Bengal', pincode: '', landmark: '' },
@@ -38,6 +40,7 @@ export default function AddRoom() {
         else formData.append(k, v);
       });
       images.forEach(img => formData.append('images', img));
+      formData.append('location', JSON.stringify({ type: 'Point', coordinates: location.coordinates }));
 
       await api.post('/rooms', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       toast.success('Room submitted for review!');
@@ -101,10 +104,22 @@ export default function AddRoom() {
             </div>
           </div>
 
-          {/* Address */}
+          {/* Address + Map Location */}
           <div className="form-section">
-            <h3 className="form-section-title">Location & Address</h3>
-            <div className="form-row">
+            <h3 className="form-section-title">📍 Location & Address</h3>
+
+            {/* Map location picker */}
+            <div className="form-group">
+              <label className="form-label" style={{marginBottom:'10px',display:'block'}}>
+                Pin Your Room on Map
+                <span style={{fontSize:'12px',color:'var(--text-3)',fontWeight:400,marginLeft:'8px'}}>
+                  Students will see the exact distance from BWU
+                </span>
+              </label>
+              <LocationPicker value={[22.7225, 88.4821]} onChange={setLocation} />
+            </div>
+
+            <div className="form-row" style={{marginTop:'16px'}}>
               <div className="form-group">
                 <label className="form-label">Street / House No. *</label>
                 <input type="text" className="form-input" placeholder="e.g., 12, Raja Street"

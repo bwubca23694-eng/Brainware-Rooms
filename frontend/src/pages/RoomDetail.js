@@ -13,6 +13,9 @@ const amenityIcons = {
   semifurnished: '🪑', purifier: '💧', powerbackup: '🔋',
 };
 
+const BWU_LAT = 22.7320;
+const BWU_LNG = 88.4998;
+
 export default function RoomDetail() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -76,7 +79,6 @@ export default function RoomDetail() {
     setPhotoPreview(files.map(f => URL.createObjectURL(f)));
   };
 
-
   const handleShare = async () => {
     const url = window.location.href;
     const text = `Check out this room near BWU: ${room.title} — ₹${room.rent?.toLocaleString()}/month\n${url}`;
@@ -100,6 +102,15 @@ export default function RoomDetail() {
   const isNew = room.createdAt && (Date.now() - new Date(room.createdAt)) < 7 * 24 * 60 * 60 * 1000;
   const hasVirtualTour = room.images?.length >= 5;
   const imgs = room.images?.length ? room.images : [{ url: 'https://via.placeholder.com/800x500?text=No+Image' }];
+  const hasCoords = !!room.location?.coordinates;
+
+  const handleDirections = () => {
+    const [lng, lat] = room.location.coordinates;
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&origin=${BWU_LAT},${BWU_LNG}&destination=${lat},${lng}&travelmode=walking`,
+      '_blank'
+    );
+  };
 
   return (
     <div className="room-detail-page">
@@ -116,7 +127,13 @@ export default function RoomDetail() {
               <div className="gallery-main">
                 <img src={imgs[activeImg]?.url} alt={room.title} />
                 {room.distanceFromCollege && (
-                  <div className="gallery-badge">📍 {room.distanceFromCollege.toFixed(1)} km from college</div>
+                  hasCoords
+                    ? <button className="gallery-badge gallery-badge-link" onClick={handleDirections} title="Get walking directions from BWU">
+                        📍 {room.distanceFromCollege.toFixed(1)} km from college · Directions ↗
+                      </button>
+                    : <div className="gallery-badge">
+                        📍 {room.distanceFromCollege.toFixed(1)} km from college
+                      </div>
                 )}
               </div>
               {imgs.length > 1 && (

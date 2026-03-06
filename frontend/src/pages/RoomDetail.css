@@ -16,6 +16,16 @@
   background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
   padding: 5px 12px; border-radius: 100px;
   font-size: 12px; color: #fff;
+  border: none;
+}
+/* Only addition — makes the badge a clickable directions link */
+.gallery-badge-link {
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+.gallery-badge-link:hover {
+  background: var(--accent);
+  transform: translateY(-2px);
 }
 .gallery-thumbs { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; padding-bottom: 4px; }
 .gallery-thumb { width: 80px; height: 60px; border-radius: 8px; overflow: hidden; border: 2px solid transparent; cursor: pointer; flex-shrink: 0; transition: var(--transition); }
