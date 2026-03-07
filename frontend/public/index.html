@@ -36,23 +36,223 @@
 
     <style>
       /* Prevent flash of white before React loads */
-      body { background: #060b18; margin: 0; }
-      /* Safe area insets for notched phones */
+      body { background: #060b18; margin: 0; font-family: 'Outfit', sans-serif; }
       #root {
         padding-top: env(safe-area-inset-top);
         padding-bottom: env(safe-area-inset-bottom);
+      }
+
+      /* ── SPLASH SCREEN ── */
+      #splash {
+        position: fixed; inset: 0; z-index: 99999;
+        background: #060b18;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 0;
+        transition: opacity 0.6s ease, visibility 0.6s ease;
+      }
+      #splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+      /* Animated grid background */
+      #splash::before {
+        content: '';
+        position: absolute; inset: 0;
+        background-image:
+          linear-gradient(rgba(255,107,43,0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,107,43,0.04) 1px, transparent 1px);
+        background-size: 48px 48px;
+        animation: gridPan 12s linear infinite;
+      }
+      @keyframes gridPan {
+        0%   { transform: translate(0,0); }
+        100% { transform: translate(48px, 48px); }
+      }
+
+      /* Glow orb */
+      #splash::after {
+        content: '';
+        position: absolute;
+        width: 500px; height: 500px;
+        background: radial-gradient(circle, rgba(255,107,43,0.12) 0%, transparent 70%);
+        border-radius: 50%;
+        animation: orbPulse 3s ease-in-out infinite;
+        pointer-events: none;
+      }
+      @keyframes orbPulse {
+        0%, 100% { transform: scale(1); opacity: 0.7; }
+        50%       { transform: scale(1.2); opacity: 1; }
+      }
+
+      /* Logo icon */
+      .splash-icon {
+        position: relative; z-index: 1;
+        width: 88px; height: 88px;
+        background: linear-gradient(135deg, #ff6b2b, #ff8c52);
+        border-radius: 24px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 42px;
+        box-shadow: 0 0 0 0 rgba(255,107,43,0.4);
+        animation: iconPop 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.1s both,
+                   iconGlow 2.5s ease-in-out 0.8s infinite;
+        margin-bottom: 24px;
+      }
+      @keyframes iconPop {
+        from { transform: scale(0.5) rotate(-8deg); opacity: 0; }
+        to   { transform: scale(1) rotate(0deg); opacity: 1; }
+      }
+      @keyframes iconGlow {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,43,0.4), 0 12px 40px rgba(255,107,43,0.25); }
+        50%       { box-shadow: 0 0 0 16px rgba(255,107,43,0), 0 12px 40px rgba(255,107,43,0.4); }
+      }
+
+      /* Title */
+      .splash-title {
+        position: relative; z-index: 1;
+        font-size: 36px; font-weight: 800; letter-spacing: -0.5px;
+        color: #f1f5ff;
+        animation: fadeUp 0.5s ease 0.35s both;
+        margin-bottom: 4px;
+      }
+      .splash-title span { color: #ff6b2b; }
+
+      /* Subtitle */
+      .splash-sub {
+        position: relative; z-index: 1;
+        font-size: 14px; font-weight: 500; letter-spacing: 2.5px;
+        text-transform: uppercase; color: #4a5878;
+        animation: fadeUp 0.5s ease 0.5s both;
+        margin-bottom: 52px;
+      }
+
+      @keyframes fadeUp {
+        from { transform: translateY(14px); opacity: 0; }
+        to   { transform: translateY(0); opacity: 1; }
+      }
+
+      /* Progress bar */
+      .splash-bar-wrap {
+        position: relative; z-index: 1;
+        width: 200px; height: 3px;
+        background: rgba(255,255,255,0.06);
+        border-radius: 99px; overflow: hidden;
+        animation: fadeUp 0.4s ease 0.65s both;
+        margin-bottom: 20px;
+      }
+      .splash-bar {
+        height: 100%; width: 0%;
+        background: linear-gradient(90deg, #ff6b2b, #ff8c52);
+        border-radius: 99px;
+        animation: barFill 2.8s cubic-bezier(0.4,0,0.2,1) 0.7s forwards;
+      }
+      @keyframes barFill {
+        0%   { width: 0%; }
+        40%  { width: 55%; }
+        70%  { width: 75%; }
+        90%  { width: 88%; }
+        100% { width: 100%; }
+      }
+
+      /* Status text */
+      .splash-status {
+        position: relative; z-index: 1;
+        font-size: 12px; color: #4a5878; font-weight: 500;
+        letter-spacing: 0.5px;
+        animation: fadeUp 0.4s ease 0.8s both;
+        min-height: 18px;
+      }
+
+      /* Floating dots */
+      .splash-dots {
+        position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+      }
+      .splash-dot {
+        position: absolute;
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: rgba(255,107,43,0.3);
+        animation: dotFloat linear infinite;
+      }
+      @keyframes dotFloat {
+        0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+        10%  { opacity: 1; }
+        90%  { opacity: 0.6; }
+        100% { transform: translateY(-100px) scale(1); opacity: 0; }
       }
     </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run BWU Rooms.</noscript>
     <div id="root"></div>
+
+    <!-- Splash screen (shown before React loads) -->
+    <div id="splash">
+      <div class="splash-dots" id="splash-dots"></div>
+      <div class="splash-icon">🏠</div>
+      <div class="splash-title">BWU <span>Rooms</span></div>
+      <div class="splash-sub">Brainware University</div>
+      <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
+      <div class="splash-status" id="splash-status">Waking up the server…</div>
+    </div>
+
+    <script>
+      // Spawn floating dots
+      const dotsContainer = document.getElementById('splash-dots');
+      for (let i = 0; i < 18; i++) {
+        const d = document.createElement('div');
+        d.className = 'splash-dot';
+        d.style.left = Math.random() * 100 + '%';
+        d.style.animationDuration = (6 + Math.random() * 8) + 's';
+        d.style.animationDelay = (Math.random() * 6) + 's';
+        d.style.width = d.style.height = (4 + Math.random() * 6) + 'px';
+        d.style.opacity = (0.1 + Math.random() * 0.3).toString();
+        dotsContainer.appendChild(d);
+      }
+    </script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').catch(() => {});
         });
       }
+    </script>
+
+    <!-- Splash screen dismiss once React is ready -->
+    <script>
+      const statusMessages = [
+        'Waking up the server…',
+        'Loading rooms near BWU…',
+        'Almost there…',
+        'Ready!',
+      ];
+      let msgIdx = 0;
+      const statusEl = document.getElementById('splash-status');
+      const msgInterval = setInterval(() => {
+        msgIdx = Math.min(msgIdx + 1, statusMessages.length - 1);
+        if (statusEl) statusEl.textContent = statusMessages[msgIdx];
+        if (msgIdx === statusMessages.length - 1) clearInterval(msgInterval);
+      }, 900);
+
+      // Hide splash once React root has content
+      function hideSplash() {
+        const splash = document.getElementById('splash');
+        if (!splash) return;
+        splash.classList.add('hidden');
+        setTimeout(() => splash.remove(), 700);
+      }
+
+      // Watch for React to mount something into #root
+      const observer = new MutationObserver(() => {
+        if (document.getElementById('root')?.children.length > 0) {
+          observer.disconnect();
+          clearInterval(msgInterval);
+          // slight delay so first paint is stable
+          setTimeout(hideSplash, 300);
+        }
+      });
+      observer.observe(document.getElementById('root'), { childList: true, subtree: true });
+
+      // Hard fallback — hide after 12s no matter what
+      setTimeout(hideSplash, 12000);
     </script>
   </body>
 </html>
