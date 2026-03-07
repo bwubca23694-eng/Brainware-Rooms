@@ -139,23 +139,41 @@ export default function Rooms() {
     googleMap.current = map;
     infoWindowRef.current = new window.google.maps.InfoWindow();
 
-    // BWU marker
-    new window.google.maps.Marker({
-      position: BWU, map,
-      icon: {
-        path: window.google.maps.SymbolPath.CIRCLE,
-        scale: 14, fillColor: '#3b82f6', fillOpacity: 1,
-        strokeColor: '#fff', strokeWeight: 2,
-      },
-      title: '🎓 Brainware University',
-      zIndex: 999,
-    });
+    // ── Helper: add a styled OverlayView landmark pin ──
+    const addLandmark = ({ lat, lng, icon, label, color = '#3b82f6', size = 'sm' }) => {
+      const div = document.createElement('div');
+      div.className = `gmap-landmark-pin gmap-landmark-${size}`;
+      div.style.setProperty('--lm-color', color);
+      div.innerHTML = `<span class="lm-icon">${icon}</span><span class="lm-label">${label}</span>`;
 
-    // BWU label overlay
-    const bwuLabel = document.createElement('div');
-    bwuLabel.className = 'gmap-bwu-label';
-    bwuLabel.textContent = '🎓 BWU Campus';
-    new window.google.maps.OverlayView().setMap(map);
+      const ov = new (class extends window.google.maps.OverlayView {
+        onAdd() { this.getPanes().overlayLayer.appendChild(div); }
+        draw() {
+          const p = this.getProjection().fromLatLngToDivPixel(new window.google.maps.LatLng(lat, lng));
+          if (p) {
+            div.style.left = (p.x - div.offsetWidth / 2) + 'px';
+            div.style.top  = (p.y - div.offsetHeight - 4) + 'px';
+          }
+        }
+        onRemove() { div.parentNode?.removeChild(div); }
+      })();
+      ov.setMap(map);
+    };
+
+    // ── BWU Campus (big, prominent) ──
+    addLandmark({ lat: BWU.lat, lng: BWU.lng, icon: '🎓', label: 'Brainware University', color: '#3b82f6', size: 'lg' });
+
+    // ── Prime student landmarks ──
+    const LANDMARKS = [
+      { lat: 22.7236, lng: 88.4832, icon: '🚉', label: 'Barasat Station',      color: '#f59e0b' },
+      { lat: 22.7297, lng: 88.5006, icon: '🚪', label: 'BWU Main Gate',         color: '#10b981' },
+      { lat: 22.7270, lng: 88.4930, icon: '🏪', label: 'Noapara Market',        color: '#8b5cf6' },
+      { lat: 22.7180, lng: 88.4750, icon: '🏥', label: 'Barasat Govt Hospital', color: '#ef4444' },
+      { lat: 22.7340, lng: 88.4850, icon: '🍽️', label: 'Nabapally Bazaar',      color: '#f97316' },
+      { lat: 22.7450, lng: 88.4780, icon: '🏫', label: 'Barasat College',       color: '#06b6d4' },
+    ];
+
+    LANDMARKS.forEach(lm => addLandmark({ ...lm, size: 'sm' }));
 
     // 2km radius circle
     bwuCircle.current = new window.google.maps.Circle({
@@ -439,9 +457,17 @@ export default function Rooms() {
                       <span>{t}</span>
                     </div>
                   ))}
-                  <div className="map-legend-item">
+                  <div className="map-legend-item" style={{borderTop:'1px solid rgba(255,255,255,0.08)',marginTop:'4px',paddingTop:'4px'}}>
                     <div className="map-legend-dot" style={{background:'#3b82f6'}} />
-                    <span>BWU Campus</span>
+                    <span>🎓 BWU Campus</span>
+                  </div>
+                  <div className="map-legend-item">
+                    <div className="map-legend-dot" style={{background:'#f59e0b'}} />
+                    <span>🚉 Station</span>
+                  </div>
+                  <div className="map-legend-item">
+                    <div className="map-legend-dot" style={{background:'#10b981'}} />
+                    <span>🚪 Main Gate</span>
                   </div>
                 </div>
 

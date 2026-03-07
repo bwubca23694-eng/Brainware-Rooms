@@ -142,7 +142,7 @@
         height: 100%; width: 0%;
         background: linear-gradient(90deg, #ff6b2b, #ff8c52);
         border-radius: 99px;
-        animation: barFill 2.8s cubic-bezier(0.4,0,0.2,1) 0.7s forwards;
+        animation: barFill 4s cubic-bezier(0.4,0,0.2,1) 0.7s forwards;
       }
       @keyframes barFill {
         0%   { width: 0%; }
@@ -187,7 +187,26 @@
     <!-- Splash screen (shown before React loads) -->
     <div id="splash">
       <div class="splash-dots" id="splash-dots"></div>
-      <div class="splash-icon">🏠</div>
+      <style>
+        @keyframes cubeRotate3d { 0%{transform:rotateX(0)rotateY(0)} 100%{transform:rotateX(360deg)rotateY(360deg)} }
+        @keyframes faceGlow { 0%,100%{opacity:.85} 50%{opacity:.35} }
+        .sp-scene { perspective:350px; width:72px; height:72px; margin-bottom:20px; }
+        .sp-cube { width:72px; height:72px; transform-style:preserve-3d; animation:cubeRotate3d 5s linear infinite; }
+        .sp-face { position:absolute; width:72px; height:72px; border-radius:14px; border:2px solid rgba(255,107,43,0.55); display:flex; align-items:center; justify-content:center; font-size:26px; background:rgba(255,107,43,0.12); animation:faceGlow 5s ease-in-out infinite; }
+        .sp-front{transform:translateZ(36px)} .sp-back{transform:rotateY(180deg) translateZ(36px)}
+        .sp-right{transform:rotateY(90deg) translateZ(36px)} .sp-left{transform:rotateY(-90deg) translateZ(36px)}
+        .sp-top{transform:rotateX(90deg) translateZ(36px)} .sp-bottom{transform:rotateX(-90deg) translateZ(36px)}
+      </style>
+      <div class="sp-scene">
+        <div class="sp-cube">
+          <div class="sp-face sp-front">🏠</div>
+          <div class="sp-face sp-back">🔑</div>
+          <div class="sp-face sp-right">🎓</div>
+          <div class="sp-face sp-left">📍</div>
+          <div class="sp-face sp-top">⭐</div>
+          <div class="sp-face sp-bottom">💬</div>
+        </div>
+      </div>
       <div class="splash-title">BWU <span>Rooms</span></div>
       <div class="splash-sub">Brainware University</div>
       <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
@@ -246,13 +265,13 @@
           observer.disconnect();
           clearInterval(msgInterval);
           // slight delay so first paint is stable
-          setTimeout(hideSplash, 300);
+          setTimeout(hideSplash, 800); // let 3D animation show for a moment
         }
       });
       observer.observe(document.getElementById('root'), { childList: true, subtree: true });
 
       // Hard fallback — hide after 12s no matter what
-      setTimeout(hideSplash, 12000);
+      setTimeout(hideSplash, 30000); // cold start can take up to 30s on Render free tier
     </script>
   </body>
 </html>

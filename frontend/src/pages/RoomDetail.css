@@ -86,9 +86,23 @@
 .booking-total strong { font-family: var(--font-heading); font-size: 18px; }
 
 @media (max-width: 900px) {
-  .room-detail-layout { grid-template-columns: 1fr; }
-  .booking-sidebar { order: -1; }
+  .room-detail-layout { grid-template-columns: 1fr; gap: 16px; }
+  .booking-sidebar { order: 2; }   /* sidebar goes BELOW main content on mobile */
   .booking-card { position: static; }
+  .room-info-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .room-price-box { text-align: left; }
+  .room-detail-page { padding: 16px 0 100px; } /* bottom padding for bottom nav */
+  .gallery-main { aspect-ratio: 4/3; }
+  .amenities-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+  .rules-grid { grid-template-columns: repeat(2, 1fr); }
+  .owner-info-card { flex-wrap: wrap; }
+  .semester-monthly { font-size: 22px; }
+}
+
+@media (max-width: 480px) {
+  .gallery-thumbs { gap: 6px; }
+  .gallery-thumb { width: 64px; height: 48px; }
+  .room-badges { gap: 6px; }
 }
 
 /* ── SEMESTER PRICING ─────────────────────── */
