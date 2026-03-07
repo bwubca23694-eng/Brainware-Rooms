@@ -79,6 +79,34 @@ export default function RoomDetail() {
     setPhotoPreview(files.map(f => URL.createObjectURL(f)));
   };
 
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Check if already saved
+  useEffect(() => {
+    if (!user) return;
+    api.get('/users/saved-rooms')
+      .then(res => {
+        const ids = (res.data.rooms || []).map(r => r._id?.toString());
+        setSaved(ids.includes(id));
+      })
+      .catch(() => {});
+  }, [id, user]);
+
+  const handleSave = async () => {
+    if (!user) { toast.info('Please sign in to save rooms'); return navigate('/login'); }
+    setSaving(true);
+    try {
+      const res = await api.post(`/users/saved-rooms/${id}`);
+      setSaved(res.data.saved);
+      toast.success(res.data.saved ? '🔖 Room saved!' : 'Removed from saved rooms');
+    } catch (err) {
+      toast.error('Could not save room');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleShare = async () => {
     const url = window.location.href;
     const text = `Check out this room near BWU: ${room.title} — ₹${room.rent?.toLocaleString()}/month\n${url}`;
@@ -180,9 +208,20 @@ export default function RoomDetail() {
                     📍 {room.address?.street}, {room.address?.area}, {room.address?.city} - {room.address?.pincode}
                   </p>
                 </div>
-                <button onClick={handleShare} className="btn btn-ghost btn-sm" title="Share this room" style={{gap:'6px'}}>
-                  📤 Share
-                </button>
+                <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className={`btn btn-sm ${saved ? 'btn-primary' : 'btn-ghost'}`}
+                    title={saved ? 'Remove from saved' : 'Save this room'}
+                    style={{ gap: '6px', minWidth: '90px' }}
+                  >
+                    {saved ? '🔖 Saved' : '🔖 Save'}
+                  </button>
+                  <button onClick={handleShare} className="btn btn-ghost btn-sm" title="Share this room" style={{gap:'6px'}}>
+                    📤 Share
+                  </button>
+                </div>
               </div>
 
               <div className="divider"></div>

@@ -1,7 +1,10 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import './RoomCard.css';
 import { getResponseLabel } from '../../utils/roomHelpers';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../utils/api';
 
 const amenityIcons = {
   wifi: '📶', ac: '❄️', parking: '🅿️', laundry: '🧺', mess: '🍽️',
@@ -15,7 +18,12 @@ const typeColors = {
   triple: '#06b6d4', '2bhk': '#84cc16',
 };
 
-export default function RoomCard({ room }) {
+export default function RoomCard({ room, initialSaved = false }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [saved, setSaved] = useState(initialSaved);
+  const [saving, setSaving] = useState(false);
+
   const img = room.images?.[0]?.url;
   const isNew = room.createdAt && (Date.now() - new Date(room.createdAt)) < 7 * 24 * 60 * 60 * 1000;
   const hasVirtualTour = room.images?.length >= 5;
@@ -23,6 +31,22 @@ export default function RoomCard({ room }) {
   const extra = (room.amenities?.length || 0) - 4;
   const typeColor = typeColors[room.type] || '#ff6b2b';
   const responseInfo = getResponseLabel(room.owner?.avgResponseTime);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) { toast.info('Sign in to save rooms'); navigate('/login'); return; }
+    setSaving(true);
+    try {
+      const res = await api.post(`/users/saved-rooms/${room._id}`);
+      setSaved(res.data.saved);
+      toast.success(res.data.saved ? '🔖 Room saved!' : 'Removed from saved');
+    } catch {
+      toast.error('Could not save room');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Link to={`/rooms/${room._id}`} className="room-card">
@@ -32,6 +56,16 @@ export default function RoomCard({ room }) {
           ? <img src={img} alt={room.title} loading="lazy" />
           : <div className="room-no-img">🏠</div>
         }
+        {/* Save button */}
+        <button
+          className={`room-card-save-btn ${saved ? 'saved' : ''}`}
+          onClick={handleSave}
+          disabled={saving}
+          title={saved ? 'Remove from saved' : 'Save room'}
+        >
+          {saved ? '🔖' : '🤍'}
+        </button>
+
         {/* Top badges */}
         <div className="room-card-top-badges">
           <span className={`badge ${room.availability ? 'badge-green' : 'badge-red'}`}>
@@ -49,7 +83,6 @@ export default function RoomCard({ room }) {
             📍 {room.distanceFromCollege.toFixed(1)} km from BWU
           </div>
         )}
-
       </div>
 
       {/* Body */}
@@ -70,14 +103,11 @@ export default function RoomCard({ room }) {
           </div>
         )}
 
-        {/* Response rate */}
         {responseInfo && (
           <div style={{fontSize:'11px',fontWeight:700,color:responseInfo.color,marginTop:'2px'}}>
             {responseInfo.label}
           </div>
         )}
-
-
 
         <div className="room-card-footer">
           <div className="room-card-rent">
