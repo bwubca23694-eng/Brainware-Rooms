@@ -5,3 +5,4 @@ backend/node_modules/
 .env
 backend/.env
 frontend/.env
+update.txt

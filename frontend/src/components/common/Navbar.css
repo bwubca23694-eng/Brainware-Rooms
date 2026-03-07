@@ -98,7 +98,8 @@
   display: none; flex-direction: column; gap: 5px;
   background: none; border: none; cursor: pointer; padding: 4px;
 }
-.menu-toggle span { display: block; width: 21px; height: 2px; background: var(--text-1); border-radius: 2px; transition: var(--t); }
+.menu-toggle span { display: block; width: 22px; height: 2.5px; background: var(--text-1); border-radius: 2px; transition: var(--t); }
+.menu-toggle { background: rgba(128,128,128,0.12) !important; border-radius: 8px !important; padding: 7px 6px !important; }
 
 @media(max-width:768px) {
   .menu-toggle { display: flex; }

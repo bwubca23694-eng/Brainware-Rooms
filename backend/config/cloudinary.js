@@ -8,7 +8,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const storage = new CloudinaryStorage({
+const imageStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'brainware-rooms',
@@ -17,9 +17,27 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const upload = multer({ 
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+const videoStorage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => ({
+    folder: 'brainware-rooms-videos',
+    resource_type: 'video',
+    allowed_formats: ['mp4', 'mov', 'avi', 'webm'],
+  }),
 });
 
-module.exports = { cloudinary, upload };
+const upload = multer({
+  storage: imageStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+const uploadVideo = multer({
+  storage: videoStorage,
+  limits: { fileSize: 100 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('video/')) cb(null, true);
+    else cb(new Error('Only video files allowed'), false);
+  },
+});
+
+module.exports = { cloudinary, upload, uploadVideo };

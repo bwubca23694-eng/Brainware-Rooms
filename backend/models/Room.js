@@ -25,6 +25,7 @@ const roomSchema = new mongoose.Schema({
   },
   distanceFromCollege: { type: Number }, // in km
   images: [{ url: String, publicId: String }],
+  videos: [{ url: String, publicId: String }],
   amenities: [{
     type: String,
     enum: ['wifi', 'ac', 'parking', 'laundry', 'mess', 'security', 'cctv', 'gym', 'lift', 'powerbackup', 'furnished', 'semifurnished', 'kitchen', 'bathroom', 'balcony', 'tv', 'geyser', 'purifier']

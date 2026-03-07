@@ -7,13 +7,21 @@ const { sendToUser } = require('../utils/pushNotify');
 // getDashboard (also exported as getDashboardStats for compatibility)
 exports.getDashboard = exports.getDashboardStats = async (req, res) => {
   try {
-    const [users, rooms, bookings, pendingRooms] = await Promise.all([
+    const [totalUsers, totalRooms, totalBookings, pendingRooms, pendingOwners, recentRooms, recentBookings] = await Promise.all([
       User.countDocuments(),
       Room.countDocuments({ status: 'approved' }),
       Booking.countDocuments(),
       Room.countDocuments({ status: 'pending' }),
+      User.countDocuments({ role: 'owner', isOwnerApproved: false }),
+      Room.find({ status: 'pending' }).populate('owner', 'name email').sort('-createdAt').limit(5),
+      Booking.find().populate('room', 'title').populate('student', 'name email').sort('-createdAt').limit(5),
     ]);
-    res.json({ success: true, stats: { users, rooms, bookings, pendingRooms } });
+    res.json({
+      success: true,
+      stats: { totalUsers, totalRooms, totalBookings, pendingRooms, pendingOwners },
+      recentRooms,
+      recentBookings,
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

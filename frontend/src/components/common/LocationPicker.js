@@ -35,7 +35,7 @@ export default function LocationPicker({ value, onChange }) {
 
     const map = new window.google.maps.Map(mapRef.current, {
       center: BWU, zoom: 16,
-      mapTypeId: 'roadmap',
+      mapTypeId: 'satellite',
       mapTypeControl: true,
       mapTypeControlOptions: {
         style: window.google.maps.MapTypeControlStyle.HORIZONTAL_BAR,

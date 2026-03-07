@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 import RoomCard from '../components/rooms/RoomCard';
 import './Rooms.css';
 
@@ -41,6 +42,7 @@ function loadGoogleMaps() {
 }
 
 export default function Rooms() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
@@ -59,6 +61,7 @@ export default function Rooms() {
   const markersRef = useRef([]);
   const bwuCircle = useRef(null);
   const infoWindowRef = useRef(null);
+  const hoverTimeoutRef = useRef(null);
 
   const [filters, setFilters] = useState({
     type: searchParams.get('type') || '',
@@ -117,7 +120,7 @@ export default function Rooms() {
     const map = new window.google.maps.Map(mapRef.current, {
       center: BWU,
       zoom: 15,
-      mapTypeId: 'roadmap',
+      mapTypeId: 'satellite',
       disableDefaultUI: false,
       zoomControl: true,
       mapTypeControl: true,
@@ -129,6 +132,7 @@ export default function Rooms() {
       streetViewControl: true,
       fullscreenControl: true,
       tilt: 0,
+      gestureHandling: 'greedy', // single-finger scroll
       styles: [], // light theme — no dark override
     });
 
@@ -175,20 +179,13 @@ export default function Rooms() {
       const color = TYPE_COLORS[room.type] || '#ff6b2b';
       const rentLabel = `₹${room.rent >= 1000 ? Math.round(room.rent/1000) + 'k' : room.rent}`;
 
-      // Custom HTML marker using OverlayView approach via Marker label
+      // Invisible base marker — price shown by OverlayView div only (no duplicate label)
       const marker = new window.google.maps.Marker({
         position: { lat, lng },
         map: googleMap.current,
         icon: {
           path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 0, // invisible base
-        },
-        label: {
-          text: rentLabel,
-          color: '#fff',
-          fontSize: '11px',
-          fontWeight: '800',
-          fontFamily: 'Outfit, sans-serif',
+          scale: 0, // fully invisible — OverlayView handles the visual
         },
         title: room.title,
         zIndex: 100,
@@ -200,7 +197,17 @@ export default function Rooms() {
       markerDiv.style.background = color;
       markerDiv.style.borderColor = color + '80';
       markerDiv.textContent = rentLabel;
+
+      markerDiv.onmouseenter = () => {
+        clearTimeout(hoverTimeoutRef.current);
+        setSelectedRoom(room);
+        googleMap.current.panTo({ lat, lng });
+      };
+      markerDiv.onmouseleave = () => {
+        hoverTimeoutRef.current = setTimeout(() => setSelectedRoom(r => r?._id === room._id ? null : r), 300);
+      };
       markerDiv.onclick = () => {
+        clearTimeout(hoverTimeoutRef.current);
         setSelectedRoom(room);
         googleMap.current.panTo({ lat, lng });
         googleMap.current.setZoom(16);
@@ -440,7 +447,7 @@ export default function Rooms() {
 
                 {/* Selected room card */}
                 {selectedRoom && (
-                  <div className="map-selected-card">
+                  <div className="map-selected-card" onMouseEnter={() => clearTimeout(hoverTimeoutRef.current)} onMouseLeave={() => { hoverTimeoutRef.current = setTimeout(() => setSelectedRoom(null), 200); }}>
                     <button className="map-card-close" onClick={() => setSelectedRoom(null)}>✕</button>
                     <div className="map-card-img">
                       {selectedRoom.images?.[0]?.url
@@ -479,10 +486,16 @@ export default function Rooms() {
                           View Details →
                         </button>
                         {(selectedRoom.contactWhatsapp || selectedRoom.owner?.phone) && (
-                          <a href={`https://wa.me/${(selectedRoom.contactWhatsapp||selectedRoom.owner?.phone).replace(/\D/g,'')}?text=${encodeURIComponent(`Hi, I saw "${selectedRoom.title}" on BWU Rooms — is it available?`)}`}
-                            target="_blank" rel="noopener noreferrer" className="btn btn-wa btn-sm">
-                            💬 WhatsApp
-                          </a>
+                          user ? (
+                            <a href={`https://wa.me/${(selectedRoom.contactWhatsapp||selectedRoom.owner?.phone).replace(/\D/g,'')}?text=${encodeURIComponent(`Hi, I saw "${selectedRoom.title}" on BWU Rooms — is it available?`)}`}
+                              target="_blank" rel="noopener noreferrer" className="btn btn-wa btn-sm">
+                              💬 WhatsApp
+                            </a>
+                          ) : (
+                            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/login')}>
+                              🔐 Sign in to Contact
+                            </button>
+                          )
                         )}
                       </div>
                     </div>

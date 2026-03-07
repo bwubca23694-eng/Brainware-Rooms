@@ -14,7 +14,9 @@ export default function EditRoom() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState(null);
   const [newImages, setNewImages] = useState([]);
-  const [location, setLocation] = useState(null); // { coordinates: [lng, lat] }
+  const [newVideo, setNewVideo] = useState(null);
+  const [videoPreview, setVideoPreview] = useState(null);
+  const [location, setLocation] = useState(null);
 
   useEffect(() => {
     api.get(`/rooms/${id}`)
@@ -58,6 +60,14 @@ export default function EditRoom() {
       newImages.forEach(img => formData.append('images', img));
 
       await api.put(`/rooms/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+
+      // Upload new video if provided
+      if (newVideo) {
+        const vidData = new FormData();
+        vidData.append('video', newVideo);
+        await api.post(`/rooms/${id}/video`, vidData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      }
+
       toast.success('Room updated! Pending re-review.');
       navigate('/owner/rooms');
     } catch (err) {
@@ -236,9 +246,11 @@ export default function EditRoom() {
             </div>
           </div>
 
-          {/* Photos */}
+          {/* Photos & Video */}
           <div className="form-section">
-            <h3 className="form-section-title">Photos</h3>
+            <h3 className="form-section-title">Photos & Video</h3>
+
+            {/* Existing photos */}
             {form.images?.length > 0 && (
               <>
                 <p style={{ fontSize: '13px', color: 'var(--text-3)', marginBottom: '10px' }}>Current photos:</p>
@@ -258,13 +270,54 @@ export default function EditRoom() {
             <input type="file" accept="image/*" multiple
               onChange={e => setNewImages(Array.from(e.target.files))} className="form-input" />
             {newImages.length > 0 && (
-              <div className="image-preview-row" style={{ marginTop: '12px' }}>
+              <div className="image-preview-row" style={{ marginTop: '12px', marginBottom: '20px' }}>
                 {newImages.map((f, i) => (
                   <div key={i} className="image-preview">
                     <img src={URL.createObjectURL(f)} alt="" />
                     <span className="cover-label" style={{ background: '#10b981' }}>New</span>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Existing videos */}
+            {form.videos?.length > 0 && (
+              <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-3)', marginBottom: '10px' }}>Current video:</p>
+                <video src={form.videos[0].url} controls style={{ width: '100%', maxWidth: '400px', borderRadius: '8px', border: '1px solid var(--border)' }} />
+              </div>
+            )}
+
+            {/* New video upload */}
+            {(form.videos?.length || 0) < 2 && (
+              <div style={{ marginTop: '16px' }}>
+                <label className="form-label">
+                  {form.videos?.length > 0 ? 'Add Another Video' : 'Room Video'}
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> (optional · max 100MB · mp4/mov)</span>
+                </label>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '10px' }}>
+                  🎬 A walkthrough video gets significantly more booking requests!
+                </p>
+                <input
+                  type="file" accept="video/mp4,video/mov,video/avi,video/webm"
+                  className="form-input"
+                  onChange={e => {
+                    const f = e.target.files[0];
+                    if (!f) return;
+                    if (f.size > 100 * 1024 * 1024) { toast.error('Video must be under 100MB'); return; }
+                    setNewVideo(f);
+                    setVideoPreview(URL.createObjectURL(f));
+                  }}
+                />
+                {videoPreview && (
+                  <div style={{ marginTop: '12px', position: 'relative', display: 'inline-block' }}>
+                    <video src={videoPreview} controls style={{ width: '100%', maxWidth: '400px', borderRadius: '8px', border: '1px solid var(--border)' }} />
+                    <button type="button" onClick={() => { setNewVideo(null); setVideoPreview(null); }}
+                      style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: '28px', height: '28px', cursor: 'pointer', fontSize: '14px' }}>
+                      ✕
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

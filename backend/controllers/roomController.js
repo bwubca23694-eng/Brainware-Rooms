@@ -202,3 +202,27 @@ exports.getNearbyRooms = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+exports.addVideo = async (req, res) => {
+  try {
+    const room = await Room.findById(req.params.id);
+    if (!room) return res.status(404).json({ success: false, message: 'Room not found' });
+    if (room.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin')
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+
+    if (!req.file) return res.status(400).json({ success: false, message: 'No video file uploaded' });
+
+    const video = { url: req.file.path, publicId: req.file.filename };
+    room.videos = room.videos || [];
+    // Max 2 videos per room
+    if (room.videos.length >= 2)
+      return res.status(400).json({ success: false, message: 'Maximum 2 videos allowed per room' });
+
+    room.videos.push(video);
+    await room.save();
+
+    res.json({ success: true, video, videos: room.videos });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

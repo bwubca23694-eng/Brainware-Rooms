@@ -22,15 +22,7 @@ export default function RoomCard({ room }) {
   const topAmenities = room.amenities?.slice(0, 4) || [];
   const extra = (room.amenities?.length || 0) - 4;
   const typeColor = typeColors[room.type] || '#ff6b2b';
-  const waNumber = room.contactWhatsapp || room.owner?.phone;
   const responseInfo = getResponseLabel(room.owner?.avgResponseTime);
-
-  const handleWhatsApp = (e) => {
-    e.preventDefault(); // stop Link navigation
-    const msg = encodeURIComponent(`Hi, I saw "${room.title}" on BWU Rooms — is it still available?`);
-    const num = waNumber.replace(/\D/g, '');
-    window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
-  };
 
   return (
     <Link to={`/rooms/${room._id}`} className="room-card">
@@ -57,12 +49,7 @@ export default function RoomCard({ room }) {
             📍 {room.distanceFromCollege.toFixed(1)} km from BWU
           </div>
         )}
-        {/* WhatsApp quick contact overlay */}
-        {waNumber && (
-          <button className="room-card-wa-btn" onClick={handleWhatsApp} title="Contact on WhatsApp">
-            💬
-          </button>
-        )}
+
       </div>
 
       {/* Body */}
@@ -90,12 +77,7 @@ export default function RoomCard({ room }) {
           </div>
         )}
 
-        {/* Semester price hint */}
-        {room.rent && (
-          <div style={{fontSize:'11px',color:'var(--text-3)',fontWeight:600,marginTop:'2px'}}>
-            ₹{(room.rent * 6).toLocaleString()} per semester
-          </div>
-        )}
+
 
         <div className="room-card-footer">
           <div className="room-card-rent">

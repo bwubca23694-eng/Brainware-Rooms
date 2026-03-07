@@ -11,6 +11,7 @@ export default function AddRoom() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState([]);
+  const [videos, setVideos] = useState([]); // up to 2
   const [location, setLocation] = useState({ coordinates: [88.4821, 22.7225] });
   const [form, setForm] = useState({
     title: '', description: '', type: 'single', rent: '', deposit: '',
@@ -42,7 +43,17 @@ export default function AddRoom() {
       images.forEach(img => formData.append('images', img));
       formData.append('location', JSON.stringify({ type: 'Point', coordinates: location.coordinates }));
 
-      await api.post('/rooms', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const res = await api.post('/rooms', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+
+      // Upload videos separately (up to 2)
+      if (videos.length > 0 && res.data.room?._id) {
+        for (const vid of videos) {
+          const vidData = new FormData();
+          vidData.append('video', vid);
+          await api.post(`/rooms/${res.data.room._id}/video`, vidData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        }
+      }
+
       toast.success('Room submitted for review!');
       navigate('/owner/rooms');
     } catch (err) {
@@ -205,21 +216,54 @@ export default function AddRoom() {
             </div>
           </div>
 
-          {/* Images */}
+          {/* Photos & Video */}
           <div className="form-section">
-            <h3 className="form-section-title">Photos</h3>
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>Upload up to 10 photos. First photo will be the cover image.</p>
-            <input type="file" accept="image/*" multiple onChange={e => setImages(Array.from(e.target.files))} className="form-input" />
-            {images.length > 0 && (
-              <div className="image-preview-row">
-                {images.map((f, i) => (
-                  <div key={i} className="image-preview">
-                    <img src={URL.createObjectURL(f)} alt="" />
-                    {i === 0 && <span className="cover-label">Cover</span>}
-                  </div>
-                ))}
-              </div>
-            )}
+            <h3 className="form-section-title">Photos & Video</h3>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label className="form-label">Photos <span style={{color:'var(--text-muted)',fontWeight:400}}>(up to 10, first = cover)</span></label>
+              <input type="file" accept="image/*" multiple onChange={e => setImages(Array.from(e.target.files))} className="form-input" />
+              {images.length > 0 && (
+                <div className="image-preview-row">
+                  {images.map((f, i) => (
+                    <div key={i} className="image-preview">
+                      <img src={URL.createObjectURL(f)} alt="" />
+                      {i === 0 && <span className="cover-label">Cover</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="form-label">Room Videos <span style={{color:'var(--text-muted)',fontWeight:400}}>(up to 2 · max 100MB each · mp4/mov)</span></label>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '10px' }}>
+                🎬 A short walkthrough video builds trust and gets more bookings!
+              </p>
+              <input
+                type="file" accept="video/mp4,video/mov,video/avi,video/webm"
+                multiple className="form-input"
+                onChange={e => {
+                  const files = Array.from(e.target.files).slice(0, 2);
+                  const oversized = files.find(f => f.size > 100 * 1024 * 1024);
+                  if (oversized) { toast.error('Each video must be under 100MB'); return; }
+                  setVideos(files);
+                }}
+              />
+              {videos.length > 0 && (
+                <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {videos.map((v, i) => (
+                    <div key={i} style={{ position: 'relative', display: 'inline-block', width: '100%', maxWidth: '400px' }}>
+                      <video src={URL.createObjectURL(v)} controls style={{ width: '100%', borderRadius: '8px', border: '1px solid var(--border)' }} />
+                      <button type="button" onClick={() => setVideos(vs => vs.filter((_, j) => j !== i))}
+                        style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: '28px', height: '28px', cursor: 'pointer', fontSize: '14px' }}>
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="form-actions">

@@ -122,30 +122,45 @@ export default function RoomDetail() {
 
         <div className="room-detail-layout">
           <div className="room-detail-main">
-            {/* Image gallery */}
-            <div className="gallery">
-              <div className="gallery-main">
-                <img src={imgs[activeImg]?.url} alt={room.title} />
-                {room.distanceFromCollege && (
-                  hasCoords
-                    ? <button className="gallery-badge gallery-badge-link" onClick={handleDirections} title="Get walking directions from BWU">
-                        📍 {room.distanceFromCollege.toFixed(1)} km from college · Directions ↗
-                      </button>
-                    : <div className="gallery-badge">
-                        📍 {room.distanceFromCollege.toFixed(1)} km from college
-                      </div>
-                )}
-              </div>
-              {imgs.length > 1 && (
-                <div className="gallery-thumbs">
-                  {imgs.map((img, i) => (
-                    <button key={i} className={`gallery-thumb ${activeImg === i ? 'active' : ''}`} onClick={() => setActiveImg(i)}>
-                      <img src={img.url} alt="" />
-                    </button>
-                  ))}
+            {/* Image + Video gallery */}
+            {(() => {
+              const mediaItems = [
+                ...imgs.map(img => ({ type: 'image', url: img.url })),
+                ...(room.videos || []).map(v => ({ type: 'video', url: v.url })),
+              ];
+              const active = mediaItems[activeImg] || mediaItems[0];
+              return (
+                <div className="gallery">
+                  <div className="gallery-main">
+                    {active.type === 'video'
+                      ? <video src={active.url} controls style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000', borderRadius: 'var(--radius-lg)' }} />
+                      : <img src={active.url} alt={room.title} />
+                    }
+                    {room.distanceFromCollege && (
+                      hasCoords
+                        ? <button className="gallery-badge gallery-badge-link" onClick={handleDirections} title="Get walking directions from BWU">
+                            📍 {room.distanceFromCollege.toFixed(1)} km from college · Directions ↗
+                          </button>
+                        : <div className="gallery-badge">
+                            📍 {room.distanceFromCollege.toFixed(1)} km from college
+                          </div>
+                    )}
+                  </div>
+                  {mediaItems.length > 1 && (
+                    <div className="gallery-thumbs">
+                      {mediaItems.map((m, i) => (
+                        <button key={i} className={`gallery-thumb ${activeImg === i ? 'active' : ''}`} onClick={() => setActiveImg(i)}>
+                          {m.type === 'video'
+                            ? <div className="gallery-thumb-video">▶</div>
+                            : <img src={m.url} alt="" />
+                          }
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })()}
 
             {/* Room info */}
             <div className="room-info-section">
@@ -165,16 +180,9 @@ export default function RoomDetail() {
                     📍 {room.address?.street}, {room.address?.area}, {room.address?.city} - {room.address?.pincode}
                   </p>
                 </div>
-                <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:'10px'}}>
-                  <button onClick={handleShare} className="btn btn-ghost btn-sm" title="Share this room" style={{gap:'6px'}}>
-                    📤 Share
-                  </button>
-                  <div className="room-price-box">
-                    <span className="room-price">₹{room.rent?.toLocaleString()}</span>
-                    <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>/month</span>
-                    {room.deposit > 0 && <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>₹{room.deposit?.toLocaleString()} deposit</div>}
-                  </div>
-                </div>
+                <button onClick={handleShare} className="btn btn-ghost btn-sm" title="Share this room" style={{gap:'6px'}}>
+                  📤 Share
+                </button>
               </div>
 
               <div className="divider"></div>
@@ -238,16 +246,18 @@ export default function RoomDetail() {
                     return resp ? <div style={{fontSize:'11px',color:resp.color,fontWeight:700,marginTop:'4px'}}>{resp.label}</div> : null;
                   })()}
                 </div>
-                {room.contactPhone && (
-                  <a href={`tel:${room.contactPhone}`} className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }}>
-                    📞 Call
-                  </a>
-                )}
-                {room.contactWhatsapp && (
-                  <a href={`https://wa.me/${room.contactWhatsapp}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm">
-                    💬 WhatsApp
-                  </a>
-                )}
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+                  {room.contactPhone && (
+                    user
+                      ? <a href={`tel:${room.contactPhone}`} className="btn btn-ghost btn-sm">📞 Call</a>
+                      : <button className="btn btn-ghost btn-sm" onClick={() => { toast.info('Please sign in to contact the owner'); navigate('/login'); }}>📞 Call</button>
+                  )}
+                  {room.contactWhatsapp && (
+                    user
+                      ? <a href={`https://wa.me/${room.contactWhatsapp}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm">💬 WhatsApp</a>
+                      : <button className="btn btn-outline btn-sm" onClick={() => { toast.info('Please sign in to contact the owner'); navigate('/login'); }}>💬 WhatsApp</button>
+                  )}
+                </div>
               </div>
 
               {/* Reviews */}
